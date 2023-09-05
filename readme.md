@@ -1,10 +1,11 @@
-[![Display Hardware](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml)
-[![Firmware Workflow](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/firmware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/firmware_workflow.yml)
+[![Docs](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/docs_workflow.yml)
+[![Hardware](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml)
+[![Firmware](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/firmware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/firmware_workflow.yml)
 
 
 # UnnamedClockProject
 
-![Banner](Static/banner.png)
+![Banner](Static/Banner.png)
 
 This repo contains all the firmware and hardware for the UnnamedClockProject.
 
