@@ -1,31 +1,28 @@
 /**
- * @file main.cpp
- * @author Joe
- * @brief Source code for UnnamedClockProject
+ * @brief Todo!
  */
 
-// Libs
-#include <Arduino.h>
+#include "Arduino.h"
 
-// Headers
-#include "boardPins.h"
+const uint8_t dir = 12;
+const uint8_t en = 11;
 
 void setup()
 {
-    // Setup serial
-    delay(200);
-    Serial.begin(115200);
-    Serial.println(REVISION);
-
-    // Pins
-    pinMode(STAT_LED, OUTPUT);
+  pinMode(dir, OUTPUT);
+  pinMode(en, OUTPUT);
 }
 
 void loop()
 {
-    // Flash LED
-    digitalWrite(STAT_LED, HIGH);
-    delay(1000);
-    digitalWrite(STAT_LED, LOW);
-    delay(1000);
+  for (uint8_t i = 0; i < 2; i++)
+  {
+    digitalWrite(dir, i);
+    delay(250);
+    digitalWrite(en, true);
+    delay(10 * 1000);
+    digitalWrite(en, true);
+    digitalWrite(dir, false);
+    delay(10 * 1000);
+  }
 }
