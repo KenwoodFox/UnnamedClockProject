@@ -1,4 +1,4 @@
-[![Docs](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/docs_workflow.yml)
+[![Docs](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/docs_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/docs_workflow.yml)
 [![Hardware](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/hardware_workflow.yml)
 [![Firmware](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/firmware_workflow.yml/badge.svg)](https://github.com/KenwoodFox/UnnamedClockProject/actions/workflows/firmware_workflow.yml)
 
