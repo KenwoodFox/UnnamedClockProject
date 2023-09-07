@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "ac1ja")(type "KiCad")(uri "${KIPRJMOD}/Libraries/ac1ja-kicad-libraries/footprints/ac1ja.pretty")(options "")(descr ""))
+)

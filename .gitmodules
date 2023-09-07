@@ -1,0 +1,3 @@
+[submodule "Hardware/UnnamedClockProject/Libraries/ac1ja-kicad-libraries"]
+	path = Hardware/UnnamedClockProject/Libraries/ac1ja-kicad-libraries
+	url = https://github.com/ac1ja/ac1ja-kicad-libraries.git
