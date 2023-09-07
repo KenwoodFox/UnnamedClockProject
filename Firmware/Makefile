@@ -44,3 +44,12 @@ debug: flash monitor	## Flashes then Monitors
 
 monitor:	## Monitors the device serial
 	pio device monitor --filter=direct --filter=time
+
+# Remote versions of the above
+flash-remote:
+	pio remote --agent silvertech-iot run --target upload
+
+monitor-remote:
+	pio remote --agent silvertech-iot device monitor
+
+debug-remote: flash-remote monitor-remote

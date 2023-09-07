@@ -2,6 +2,7 @@
 #define _BOARD_PINS_H
 
 // LEDs
-#define STAT_LED 13
+#define DIR_PIN 3
+#define EN_PIN 2
 
 #endif

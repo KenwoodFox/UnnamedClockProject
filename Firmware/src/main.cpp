@@ -4,25 +4,24 @@
 
 #include "Arduino.h"
 
-const uint8_t dir = 12;
-const uint8_t en = 11;
+#include "boardPins.h"
 
 void setup()
 {
-  pinMode(dir, OUTPUT);
-  pinMode(en, OUTPUT);
+  pinMode(DIR_PIN, OUTPUT);
+  pinMode(EN_PIN, OUTPUT);
 }
 
 void loop()
 {
   for (uint8_t i = 0; i < 2; i++)
   {
-    digitalWrite(dir, i);
+    digitalWrite(DIR_PIN, i);
     delay(250);
-    digitalWrite(en, true);
+    digitalWrite(EN_PIN, true);
     delay(10 * 1000);
-    digitalWrite(en, true);
-    digitalWrite(dir, false);
+    digitalWrite(EN_PIN, false);
+    digitalWrite(DIR_PIN, false);
     delay(10 * 1000);
   }
 }
