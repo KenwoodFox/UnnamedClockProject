@@ -36,17 +36,17 @@ void setup()
 
 void loop()
 {
-  for (uint8_t i = 0; i < 2; i++)
-  {
-    digitalWrite(DIR_PIN, i);    // Set the dir
-    delay(250);                  // Delay while dir is latched
-    digitalWrite(EN_PIN, true);  // Enable movement
-    delay(10 * 1000);            // Wait 10 seconds
-    digitalWrite(EN_PIN, false); // Disable movement
-    digitalWrite(DIR_PIN, false);
-    delay(25 * 1000); // Wait for next minute
-    delay(25 * 1000);
-  }
+  /* TODO:
+   * Lots of upgrades have to happen in here, namely:
+   * - Move the CLOCK interface to its own object
+   *  - Need to centralize components like safe power-on-reset (eeprom)
+   *  - Need to ensure that we dont move unless we're 100% sure we can record what we're doing (so we never drift!)
+   *  - RTOS functions like async gps reading, we need to be sure we dont race condition and loose time!
+   */
+
+  digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
+  delay(250);                                        // Delay while dir is latched
+  digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
 
   while (ss.available() > 0)
     if (gps.encode(ss.read()))
