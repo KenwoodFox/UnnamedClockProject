@@ -18,11 +18,13 @@ SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
 
 // Task Handlers
-TaskHandle_t TaskBlink_Handler;
+TaskHandle_t TaskStatus_Handler;
+TaskHandle_t TaskGPS_Handler;
 
 // Defs
 void displayInfo();
-void TaskBlink(void *pvParameters);
+void TaskStatus(void *pvParameters);
+void TaskGPS(void *pvParameters);
 
 void setup()
 {
@@ -40,12 +42,20 @@ void setup()
 
   // Setup tasks
   xTaskCreate(
-      TaskBlink,           // A pointer to this task in memory
-      "Blink",             // A name just for humans
-      128,                 // This stack size can be checked & adjusted by reading the Stack Highwater
-      NULL,                // Parameters passed to the task function
-      2,                   // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-      &TaskBlink_Handler); // Task handle
+      TaskStatus,           // A pointer to this task in memory
+      "Blink",              // A name just for humans
+      128,                  // This stack size can be checked & adjusted by reading the Stack Highwater
+      NULL,                 // Parameters passed to the task function
+      2,                    // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+      &TaskStatus_Handler); // Task handle
+
+  xTaskCreate(
+      TaskGPS,
+      "GPS",
+      128,
+      NULL,
+      2,
+      &TaskGPS_Handler);
 }
 
 void loop()
@@ -53,8 +63,6 @@ void loop()
   // Empty. Things are done in Tasks.
 }
 
-// void loop()
-// {
 //   /* TODO:
 //    * Lots of upgrades have to happen in here, namely:
 //    * - Move the CLOCK interface to its own object
@@ -63,23 +71,30 @@ void loop()
 //    *  - RTOS functions like async gps reading, we need to be sure we dont race condition and loose time!
 //    */
 
-//   digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
-//   delay(250);                                        // Delay while dir is latched
-//   digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
+void TaskGPS(void *pvParameters)
+{
+  (void)pvParameters;
 
-//   while (ss.available() > 0)
-//     if (gps.encode(ss.read()))
-//       displayInfo();
+  // Setup for this task
+  ;
 
-//   if (millis() > 5000 && gps.charsProcessed() < 10)
-//   {
-//     Serial.println(F("No GPS detected: check wiring."));
-//     while (true)
-//       ;
-//   }
-// }
+  // "Loop"
+  for (;;)
+  {
+    while (ss.available() > 0)
+      if (gps.encode(ss.read()))
+        displayInfo();
 
-void TaskBlink(void *pvParameters) // This is a task.
+    if (millis() > 5000 && gps.charsProcessed() < 10)
+    {
+      Serial.println(F("No GPS detected: check wiring."));
+      while (true)
+        ;
+    }
+  }
+}
+
+void TaskStatus(void *pvParameters) // This is a task.
 {
   (void)pvParameters;
 
@@ -94,6 +109,11 @@ void TaskBlink(void *pvParameters) // This is a task.
     vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
     digitalWrite(LED_BUILTIN, LOW);        // turn the LED off by making the voltage LOW
     vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
+
+    // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
+    digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
+    delay(250);                                        // Delay while dir is latched
+    digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
   }
 }
 
