@@ -7,6 +7,7 @@
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
 #include <ArduinoLog.h>
+#include <LiquidCrystal.h>
 
 #include "boardPins.h"
 
@@ -16,6 +17,7 @@ static const uint32_t GPSBaud = 9600;
 // Objects
 SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
+LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 // Task Handlers
 TaskHandle_t TaskStatus_Handler;
@@ -39,6 +41,9 @@ void setup()
 
   //
   Log.info("Starting version %s", REVISION);
+
+  lcd.begin(16, 2);
+  lcd.print(REVISION);
 
   // Setup tasks
   xTaskCreate(

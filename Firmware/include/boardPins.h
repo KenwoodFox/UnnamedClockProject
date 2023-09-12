@@ -6,8 +6,16 @@
 #define EN_PIN 2
 
 // GPS
-#define PPS 9 // Change me!
+// #define PPS 9 // Change me!
 #define RX_PIN 8
 #define TX_PIN 7
+
+// LCD
+#define LCD_EN 6
+#define LCD_RS 4
+#define LCD_D4 9
+#define LCD_D5 10
+#define LCD_D6 11
+#define LCD_D7 12
 
 #endif
