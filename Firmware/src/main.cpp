@@ -22,11 +22,13 @@ LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 // Task Handlers
 TaskHandle_t TaskStatus_Handler;
 TaskHandle_t TaskGPS_Handler;
+TaskHandle_t TaskLCD_Handler;
 
 // Defs
 void displayInfo();
 void TaskStatus(void *pvParameters);
 void TaskGPS(void *pvParameters);
+void TaskLCD(void *pvParameters);
 
 void setup()
 {
@@ -41,9 +43,6 @@ void setup()
 
   //
   Log.info("Starting version %s", REVISION);
-
-  lcd.begin(16, 2);
-  lcd.print(REVISION);
 
   // Setup tasks
   xTaskCreate(
@@ -61,6 +60,14 @@ void setup()
       NULL,
       2,
       &TaskGPS_Handler);
+
+  xTaskCreate(
+      TaskLCD,
+      "LCD",
+      128,
+      NULL,
+      2,
+      &TaskLCD_Handler);
 }
 
 void loop()
@@ -96,6 +103,34 @@ void TaskGPS(void *pvParameters)
       while (true)
         ;
     }
+  }
+}
+
+// Move me somewhere else!
+void TaskLCD(void *pvParameters)
+{
+  (void)pvParameters;
+
+  // Setup
+  lcd.begin(16, 2);
+  lcd.print("Git commit");
+  lcd.setCursor(0, 1);
+  lcd.print(REVISION);
+
+  for (uint8_t i = 0; i < 5; i++)
+  {
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+
+  // "Loop"
+  for (;;)
+  {
+    lcd.clear();
+    lcd.print("Running for ");
+    lcd.print(millis() / 1000);
+    lcd.setCursor(0, 1);
+    lcd.print("seconds.");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
