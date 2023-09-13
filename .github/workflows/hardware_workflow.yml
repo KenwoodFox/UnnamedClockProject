@@ -11,7 +11,11 @@ on:
       - "Hardware/**"
       - ".github/**"
 
-#
+permissions:
+    contents: write
+    actions: read
+    checks: write
+
 jobs:
   KiCad_Hardware:
     runs-on: ubuntu-latest
