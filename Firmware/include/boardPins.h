@@ -18,4 +18,11 @@
 #define LCD_D6 11
 #define LCD_D7 12
 
+// Buttons
+#define UP_PIN A0
+#define DOWN_PIN A1
+#define LEFT_PIN A2
+#define RIGH_PIN A3
+#define MENU_PIN A4
+
 #endif

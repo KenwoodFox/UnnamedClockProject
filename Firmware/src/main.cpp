@@ -7,6 +7,7 @@
 #include <TinyGPSPlus.h>
 #include <SoftwareSerial.h>
 #include <ArduinoLog.h>
+#include <Bounce2.h>
 #include <LiquidCrystal.h>
 
 #include "boardPins.h"
@@ -18,6 +19,13 @@ static const uint32_t GPSBaud = 9600;
 SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+
+// Buttons
+Bounce2::Button upBtn = Bounce2::Button();
+Bounce2::Button downBtn = Bounce2::Button();
+Bounce2::Button leftBtn = Bounce2::Button();
+Bounce2::Button righBtn = Bounce2::Button();
+Bounce2::Button menuBtn = Bounce2::Button();
 
 // Task Handlers
 TaskHandle_t TaskStatus_Handler;
@@ -111,11 +119,18 @@ void TaskLCD(void *pvParameters)
 {
   (void)pvParameters;
 
-  // Setup
+  // Setup (lcd)
   lcd.begin(16, 2);
   lcd.print("Git commit");
   lcd.setCursor(0, 1);
   lcd.print(REVISION);
+
+  // setup (Buttons)
+  upBtn.attach(UP_PIN, INPUT_PULLUP);
+  downBtn.attach(DOWN_PIN, INPUT_PULLUP);
+  leftBtn.attach(LEFT_PIN, INPUT_PULLUP);
+  righBtn.attach(RIGH_PIN, INPUT_PULLUP);
+  menuBtn.attach(MENU_PIN, INPUT_PULLUP);
 
   for (uint8_t i = 0; i < 5; i++)
   {
@@ -125,12 +140,55 @@ void TaskLCD(void *pvParameters)
   // "Loop"
   for (;;)
   {
-    lcd.clear();
-    lcd.print("Running for ");
-    lcd.print(millis() / 1000);
-    lcd.setCursor(0, 1);
-    lcd.print("seconds.");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // Update buttons
+    upBtn.update();
+    downBtn.update();
+    leftBtn.update();
+    righBtn.update();
+    menuBtn.update();
+
+    // LCD
+    // lcd.clear();
+    // lcd.setCursor(0, 0);
+    // lcd.print("Running for ");
+    // lcd.print(millis() / 1000);
+    // lcd.setCursor(0, 1);
+    // lcd.print("seconds.  ");
+
+    lcd.setCursor(0, 0);
+    if (gps.time.isValid() && gps.satellites.value() >= 4)
+    {
+      lcd.print("GPS Ready.");
+    }
+    else
+    {
+      lcd.print("Wait for GPS...");
+      lcd.setCursor(0, 1);
+      lcd.print(gps.satellites.value());
+      lcd.print("/4 Satellites.");
+    }
+
+    // lcd.setCursor(0, 0);
+    // if (gps.time.isValid() && gps.satellites.value() >= 4)
+    // {
+    //   lcd.print("Current time is");
+    //   lcd.print(gps.time.hour());
+    //   lcd.print(":");
+    //   lcd.print(gps.time.minute());
+    //   lcd.print(":");
+    //   lcd.print(gps.time.second());
+    //   lcd.setCursor(0, 1);
+    //   lcd.print("seconds.  ");
+    // }
+    // else
+    // {
+    //   lcd.print("Wait for GPS...");
+    //   lcd.setCursor(0, 1);
+    //   lcd.print(gps.satellites.value());
+    //   lcd.print("/4 Satellites.");
+    // }
+
+    vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 }
 
