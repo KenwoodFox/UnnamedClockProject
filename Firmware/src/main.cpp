@@ -11,6 +11,8 @@
 #include <LiquidCrystal.h>
 
 #include "boardPins.h"
+#include "menuEnum.h"
+#include "customChars.h"
 
 // Config
 static const uint32_t GPSBaud = 9600;
@@ -118,9 +120,17 @@ void TaskLCD(void *pvParameters)
 
   // Setup (lcd)
   lcd.begin(16, 2);
-  lcd.print(F("Git commit"));
+  lcd.print(F("UCC Version"));
   lcd.setCursor(0, 1);
   lcd.print(REVISION);
+
+  // Setup (custom chars)
+  lcd.createChar(0, upChar);
+  lcd.createChar(1, downChar);
+  lcd.createChar(2, clockAChar);
+  lcd.createChar(3, clockBChar);
+  lcd.createChar(4, clockCChar);
+  lcd.createChar(5, clockDChar);
 
   // Setup (Buttons)
   upBtn.attach(UP_PIN, INPUT_PULLUP);
@@ -128,6 +138,9 @@ void TaskLCD(void *pvParameters)
   leftBtn.attach(LEFT_PIN, INPUT_PULLUP);
   righBtn.attach(RIGH_PIN, INPUT_PULLUP);
   menuBtn.attach(MENU_PIN, INPUT_PULLUP);
+
+  // Menu index/temp values
+  Menu menuIdx = Default;
 
   for (uint8_t i = 0; i < 5; i++)
   {
@@ -144,20 +157,64 @@ void TaskLCD(void *pvParameters)
     righBtn.update();
     menuBtn.update();
 
-    lcd.setCursor(0, 0);
-    if (gps.date.isValid() && gps.satellites.value() >= 4)
+    switch (menuIdx)
     {
-      lcd.print(F("GPS Ready."));
+    case Default:;
+      lcd.setCursor(0, 0);
+      if (gps.date.isValid() && gps.satellites.value() >= 4)
+      {
+        lcd.print(F("GPS Ready."));
+      }
+      else
+      {
+        lcd.print(F("Wait for GPS..."));
+        lcd.setCursor(0, 1);
+        lcd.print(gps.satellites.value());
+        lcd.print(F("/4 Satellites."));
+      }
+      break;
+
+    case ClockSet:;
+      lcd.setCursor(0, 0);
+      lcd.print(F("Set Time"));
+      lcd.setCursor(0, 1);
+      lcd.print(F("00:00"));
+      break;
+
+    case ManualMode:;
+      lcd.setCursor(0, 0);
+      lcd.print(F("Manual Mode"));
+      break;
+
+    default:
+      /* Not to be confused with Default (the enum) this is the fallthrough, we should never get here! */
+      break;
+    }
+
+    if (righBtn.pressed())
+    {
+      menuIdx++;
+      lcd.clear();
+    }
+
+    if (leftBtn.pressed())
+    {
+      menuIdx--;
+      lcd.clear();
+    }
+
+    // Overlays!
+    lcd.setCursor(15, 0);
+    if (true) // todo.. do someting with this later..
+    {
+      lcd.write((byte)((gps.time.second() % 4) + 2));
     }
     else
     {
-      lcd.print(F("Wait for GPS..."));
-      lcd.setCursor(0, 1);
-      lcd.print(gps.satellites.value());
-      lcd.print(F("/4 Satellites."));
+      lcd.write((byte)3);
     }
 
-    vTaskDelay(200 / portTICK_PERIOD_MS);
+    vTaskDelay(40 / portTICK_PERIOD_MS);
   }
 }
 
