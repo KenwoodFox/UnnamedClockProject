@@ -28,13 +28,13 @@ Bounce2::Button righBtn = Bounce2::Button();
 Bounce2::Button menuBtn = Bounce2::Button();
 
 // Task Handlers
-TaskHandle_t TaskStatus_Handler;
+// TaskHandle_t TaskStatus_Handler;
 TaskHandle_t TaskGPS_Handler;
 TaskHandle_t TaskLCD_Handler;
 
 // Defs
 void displayInfo();
-void TaskStatus(void *pvParameters);
+// void TaskStatus(void *pvParameters);
 void TaskGPS(void *pvParameters);
 void TaskLCD(void *pvParameters);
 
@@ -54,20 +54,12 @@ void setup()
 
   // Setup tasks
   xTaskCreate(
-      TaskStatus,           // A pointer to this task in memory
-      "Blink",              // A name just for humans
-      128,                  // This stack size can be checked & adjusted by reading the Stack Highwater
-      NULL,                 // Parameters passed to the task function
-      2,                    // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-      &TaskStatus_Handler); // Task handle
-
-  xTaskCreate(
-      TaskGPS,
-      "GPS",
-      128,
-      NULL,
-      2,
-      &TaskGPS_Handler);
+      TaskGPS,           // A pointer to this task in memory
+      "GPS",             // A name just for humans
+      128,               // This stack size can be checked & adjusted by reading the Stack Highwater
+      NULL,              // Parameters passed to the task function
+      2,                 // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+      &TaskGPS_Handler); // Task handle
 
   xTaskCreate(
       TaskLCD,
@@ -96,21 +88,26 @@ void TaskGPS(void *pvParameters)
   (void)pvParameters;
 
   // Setup for this task
-  ;
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // "Loop"
   for (;;)
   {
     while (ss.available() > 0)
+    {
       if (gps.encode(ss.read()))
         displayInfo();
-
-    if (millis() > 5000 && gps.charsProcessed() < 10)
-    {
-      Serial.println(F("No GPS detected: check wiring."));
-      while (true)
-        ;
     }
+
+    // Blinky
+    digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0);
+
+    // if (millis() > 5000 && gps.charsProcessed() < 10)
+    // {
+    //   Log.error(F("No GPS detected: check wiring."));
+    // }
+
+    vTaskDelay(60 / portTICK_PERIOD_MS);
   }
 }
 
@@ -121,11 +118,11 @@ void TaskLCD(void *pvParameters)
 
   // Setup (lcd)
   lcd.begin(16, 2);
-  lcd.print("Git commit");
+  lcd.print(F("Git commit"));
   lcd.setCursor(0, 1);
   lcd.print(REVISION);
 
-  // setup (Buttons)
+  // Setup (Buttons)
   upBtn.attach(UP_PIN, INPUT_PULLUP);
   downBtn.attach(DOWN_PIN, INPUT_PULLUP);
   leftBtn.attach(LEFT_PIN, INPUT_PULLUP);
@@ -147,73 +144,45 @@ void TaskLCD(void *pvParameters)
     righBtn.update();
     menuBtn.update();
 
-    // LCD
-    // lcd.clear();
-    // lcd.setCursor(0, 0);
-    // lcd.print("Running for ");
-    // lcd.print(millis() / 1000);
-    // lcd.setCursor(0, 1);
-    // lcd.print("seconds.  ");
-
     lcd.setCursor(0, 0);
-    if (gps.time.isValid() && gps.satellites.value() >= 4)
+    if (gps.date.isValid() && gps.satellites.value() >= 4)
     {
-      lcd.print("GPS Ready.");
+      lcd.print(F("GPS Ready."));
     }
     else
     {
-      lcd.print("Wait for GPS...");
+      lcd.print(F("Wait for GPS..."));
       lcd.setCursor(0, 1);
       lcd.print(gps.satellites.value());
-      lcd.print("/4 Satellites.");
+      lcd.print(F("/4 Satellites."));
     }
 
-    // lcd.setCursor(0, 0);
-    // if (gps.time.isValid() && gps.satellites.value() >= 4)
-    // {
-    //   lcd.print("Current time is");
-    //   lcd.print(gps.time.hour());
-    //   lcd.print(":");
-    //   lcd.print(gps.time.minute());
-    //   lcd.print(":");
-    //   lcd.print(gps.time.second());
-    //   lcd.setCursor(0, 1);
-    //   lcd.print("seconds.  ");
-    // }
-    // else
-    // {
-    //   lcd.print("Wait for GPS...");
-    //   lcd.setCursor(0, 1);
-    //   lcd.print(gps.satellites.value());
-    //   lcd.print("/4 Satellites.");
-    // }
-
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelay(200 / portTICK_PERIOD_MS);
   }
 }
 
-void TaskStatus(void *pvParameters) // This is a task.
-{
-  (void)pvParameters;
+// void TaskStatus(void *pvParameters) // This is a task.
+// {
+//   (void)pvParameters;
 
-  // Setup for this task
-  pinMode(LED_BUILTIN, OUTPUT);
+//   // Setup for this task
+//   pinMode(LED_BUILTIN, OUTPUT);
 
-  // "Loop"
-  for (;;) // A Task shall never return or exit.
-  {
-    // Serial.println(11);
-    digitalWrite(LED_BUILTIN, HIGH);       // turn the LED on (HIGH is the voltage level)
-    vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
-    digitalWrite(LED_BUILTIN, LOW);        // turn the LED off by making the voltage LOW
-    vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
+//   // "Loop"
+//   for (;;) // A Task shall never return or exit.
+//   {
+//     // Serial.println(11);
+//     digitalWrite(LED_BUILTIN, HIGH);       // turn the LED on (HIGH is the voltage level)
+//     vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
+//     digitalWrite(LED_BUILTIN, LOW);        // turn the LED off by making the voltage LOW
+//     vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
 
-    // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
-    digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
-    delay(250);                                        // Delay while dir is latched
-    digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
-  }
-}
+//     // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
+//     // digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
+//     // delay(250);                                        // Delay while dir is latched
+//     // digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
+//   }
+// }
 
 void displayInfo()
 {
