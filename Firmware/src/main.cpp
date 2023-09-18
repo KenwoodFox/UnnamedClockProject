@@ -141,6 +141,7 @@ void TaskLCD(void *pvParameters)
 
   // Menu index/temp values
   Menu menuIdx = Default;
+  char _lineBuf[16];
 
   for (uint8_t i = 0; i < 5; i++)
   {
@@ -178,9 +179,8 @@ void TaskLCD(void *pvParameters)
       lcd.setCursor(0, 0);
       lcd.print(F("Set Time"));
       lcd.setCursor(0, 1);
-      char _time[16];
-      sprintf(_time, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
-      lcd.print(_time);
+      sprintf(_lineBuf, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
+      lcd.print(_lineBuf);
       break;
 
     case ManualMode:;
