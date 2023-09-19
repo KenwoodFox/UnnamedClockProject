@@ -10,6 +10,7 @@
 #include <Bounce2.h>
 #include <LiquidCrystal.h>
 
+#include "Clock.h"
 #include "boardPins.h"
 #include "menuEnum.h"
 #include "customChars.h"
@@ -21,6 +22,7 @@ static const uint32_t GPSBaud = 9600;
 SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
+Clock clock(EN_PIN, DIR_PIN);
 
 // Buttons
 Bounce2::Button upBtn = Bounce2::Button();
@@ -60,7 +62,7 @@ void setup()
   xTaskCreate(
       TaskDriver,           // A pointer to this task in memory
       "Driver",             // A name just for humans
-      128,                  // This stack size can be checked & adjusted by reading the Stack Highwater
+      160,                  // This stack size can be checked & adjusted by reading the Stack Highwater
       NULL,                 // Parameters passed to the task function
       2,                    // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
       &TaskDriver_Handler); // Task handle
@@ -68,7 +70,7 @@ void setup()
   xTaskCreate(
       TaskInterface, // Handles human interface and serial interface
       "Interface",
-      256,
+      200,
       NULL,
       2,
       &TaskInterface_Handler);
@@ -92,11 +94,17 @@ void TaskDriver(void *pvParameters)
 {
   (void)pvParameters;
 
+  // Begin
+  Log.infoln(F("Created %s Task, heap size is %d"), pcTaskGetName(NULL), uxTaskGetStackHighWaterMark(NULL));
+
   // Setup for this task
   pinMode(LED_BUILTIN, OUTPUT);
 
   // Prev time
   TickType_t prevTime;
+
+  // Local
+  int watermark = 99999;
 
   // "Loop"
   for (;;)
@@ -108,6 +116,13 @@ void TaskDriver(void *pvParameters)
     digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
     delay(250);                                        // Delay while dir is latched
     digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
+
+    // Waterline
+    if (uxTaskGetStackHighWaterMark(NULL) < watermark)
+    {
+      watermark = uxTaskGetStackHighWaterMark(NULL);
+      Log.warningln(F("%s: Watermark dropped to %d bytes."), pcTaskGetName(NULL), watermark);
+    }
 
     xTaskDelayUntil(&prevTime, 60 / portTICK_PERIOD_MS); // Wait to resume
   }
@@ -194,7 +209,7 @@ void TaskInterface(void *pvParameters)
       lcd.setCursor(0, 0);
       lcd.print(F("Set Time"));
       lcd.setCursor(0, 1);
-      sprintf(_lineBuf, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
+      sprintf(_lineBuf, "%02d:%02d  (%02d)", gps.time.hour(), gps.time.minute(), gps.time.second());
       lcd.print(_lineBuf);
       break;
 
