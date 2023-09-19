@@ -54,6 +54,11 @@ void setup()
 
   Log.infoln(F("Starting version %s"), REVISION);
 
+  /**
+   * Because memory is limited, lets try and have
+   * as few tasks as possible running.
+   */
+
   // Setup tasks
   xTaskCreate(
       TaskGPS,           // A pointer to this task in memory
@@ -64,20 +69,12 @@ void setup()
       &TaskGPS_Handler); // Task handle
 
   xTaskCreate(
-      TaskLCD,
+      TaskLCD, // Handles human interface and serial interface
       "LCD",
-      128,
+      256,
       NULL,
       2,
       &TaskLCD_Handler);
-
-  // xTaskCreate(
-  //     TaskClock,
-  //     "Clock",
-  //     96,
-  //     NULL,
-  //     2,
-  //     &TaskClock_Handler);
 }
 
 void loop()
