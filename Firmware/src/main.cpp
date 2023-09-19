@@ -52,8 +52,7 @@ void setup()
   ss.begin(GPSBaud);
   Log.begin(LOG_LEVEL_VERBOSE, &Serial);
 
-  //
-  Log.info("Starting version %s", REVISION);
+  Log.infoln(F("Starting version %s"), REVISION);
 
   // Setup tasks
   xTaskCreate(
@@ -72,19 +71,19 @@ void setup()
       2,
       &TaskLCD_Handler);
 
-  xTaskCreate(
-      TaskClock,
-      "Clock",
-      96,
-      NULL,
-      2,
-      &TaskClock_Handler);
+  // xTaskCreate(
+  //     TaskClock,
+  //     "Clock",
+  //     96,
+  //     NULL,
+  //     2,
+  //     &TaskClock_Handler);
 }
 
 void loop()
 {
-  ;
   // Empty. Things are done in Tasks.
+  // vTaskDelete(NULL); // Exit task
 }
 
 //   /* TODO:
@@ -102,17 +101,28 @@ void TaskGPS(void *pvParameters)
   // Setup for this task
   pinMode(LED_BUILTIN, OUTPUT);
 
+  // Local
+  int watermark = 99999;
+
   // "Loop"
   for (;;)
   {
     while (ss.available() > 0)
     {
       if (gps.encode(ss.read()))
-        displayInfo();
+        ;
+      // displayInfo();
     }
 
     // Blinky
     digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0);
+
+    // Waterline
+    if (uxTaskGetStackHighWaterMark(NULL) < watermark)
+    {
+      watermark = uxTaskGetStackHighWaterMark(NULL);
+      Log.warningln(F("Watermark dropped to %d bytes."), watermark);
+    }
 
     // if (millis() > 5000 && gps.charsProcessed() < 10)
     // {
@@ -122,6 +132,12 @@ void TaskGPS(void *pvParameters)
     vTaskDelay(60 / portTICK_PERIOD_MS);
   }
 }
+
+// Daylight savings code automatic
+// christinsen timezone code <- have to get this working right eventually
+// Do the catchup/set code!
+// Hardcode the timeozne library! <- Christen
+// Wire in the RTC today <-
 
 // Move me somewhere else!
 void TaskLCD(void *pvParameters)
@@ -133,6 +149,9 @@ void TaskLCD(void *pvParameters)
   lcd.print(F("UCC Version"));
   lcd.setCursor(0, 1);
   lcd.print(REVISION);
+
+  // Prev time
+  TickType_t prevTime;
 
   // Setup (custom chars)
   lcd.createChar(0, upChar);
@@ -226,29 +245,32 @@ void TaskLCD(void *pvParameters)
       lcd.write((byte)3);
     }
 
-    vTaskDelay(40 / portTICK_PERIOD_MS);
+    xTaskDelayUntil(&prevTime, 40 / portTICK_PERIOD_MS);
   }
 }
 
-void TaskClock(void *pvParameters)
-{
-  (void)pvParameters;
+// void TaskClock(void *pvParameters)
+// {
+//   (void)pvParameters;
 
-  // Setup
-  pinMode(LED_BUILTIN, OUTPUT);
+//   // Begin
+//   Log.infoln(F("Created %s Task, heap size is %d"), pcTaskGetName(NULL), uxTaskGetStackHighWaterMark(NULL));
 
-  // Prev time
-  TickType_t prevTime;
+//   // Setup
+//   pinMode(LED_BUILTIN, OUTPUT);
 
-  for (;;)
-  {
-    // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
-    digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0);    // Set the dir if even/odd
-    delay(250);                                           // Delay while dir is latched
-    digitalWrite(EN_PIN, gps.time.second() < 10);         // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
-    xTaskDelayUntil(&prevTime, 500 / portTICK_PERIOD_MS); // Wait to resume
-  }
-}
+//   // Prev time
+//   TickType_t prevTime;
+
+//   for (;;)
+//   {
+//     // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
+//     digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0);    // Set the dir if even/odd
+//     delay(250);                                           // Delay while dir is latched
+//     digitalWrite(EN_PIN, gps.time.second() < 10);         // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
+//     xTaskDelayUntil(&prevTime, 500 / portTICK_PERIOD_MS); // Wait to resume
+//   }
+// }
 
 void displayInfo()
 {
