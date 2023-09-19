@@ -33,12 +33,13 @@ Bounce2::Button menuBtn = Bounce2::Button();
 // TaskHandle_t TaskStatus_Handler;
 TaskHandle_t TaskGPS_Handler;
 TaskHandle_t TaskLCD_Handler;
+TaskHandle_t TaskClock_Handler;
 
 // Defs
 void displayInfo();
-// void TaskStatus(void *pvParameters);
 void TaskGPS(void *pvParameters);
 void TaskLCD(void *pvParameters);
+void TaskClock(void *pvParameters);
 
 void setup()
 {
@@ -70,10 +71,19 @@ void setup()
       NULL,
       2,
       &TaskLCD_Handler);
+
+  xTaskCreate(
+      TaskClock,
+      "Clock",
+      96,
+      NULL,
+      2,
+      &TaskClock_Handler);
 }
 
 void loop()
 {
+  ;
   // Empty. Things are done in Tasks.
 }
 
@@ -207,7 +217,7 @@ void TaskLCD(void *pvParameters)
 
     // Overlays!
     lcd.setCursor(15, 0);
-    if (true) // todo.. do someting with this later..
+    if (true) // todo.. do something with this later..
     {
       lcd.write((byte)((gps.time.second() % 4) + 2));
     }
@@ -220,28 +230,25 @@ void TaskLCD(void *pvParameters)
   }
 }
 
-// void TaskStatus(void *pvParameters) // This is a task.
-// {
-//   (void)pvParameters;
+void TaskClock(void *pvParameters)
+{
+  (void)pvParameters;
 
-//   // Setup for this task
-//   pinMode(LED_BUILTIN, OUTPUT);
+  // Setup
+  pinMode(LED_BUILTIN, OUTPUT);
 
-//   // "Loop"
-//   for (;;) // A Task shall never return or exit.
-//   {
-//     // Serial.println(11);
-//     digitalWrite(LED_BUILTIN, HIGH);       // turn the LED on (HIGH is the voltage level)
-//     vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
-//     digitalWrite(LED_BUILTIN, LOW);        // turn the LED off by making the voltage LOW
-//     vTaskDelay(1000 / portTICK_PERIOD_MS); // wait for one second
+  // Prev time
+  TickType_t prevTime;
 
-//     // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
-//     // digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
-//     // delay(250);                                        // Delay while dir is latched
-//     // digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
-//   }
-// }
+  for (;;)
+  {
+    // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
+    digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0);    // Set the dir if even/odd
+    delay(250);                                           // Delay while dir is latched
+    digitalWrite(EN_PIN, gps.time.second() < 10);         // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
+    xTaskDelayUntil(&prevTime, 500 / portTICK_PERIOD_MS); // Wait to resume
+  }
+}
 
 void displayInfo()
 {
