@@ -30,16 +30,13 @@ Bounce2::Button righBtn = Bounce2::Button();
 Bounce2::Button menuBtn = Bounce2::Button();
 
 // Task Handlers
-// TaskHandle_t TaskStatus_Handler;
-TaskHandle_t TaskGPS_Handler;
-TaskHandle_t TaskLCD_Handler;
-TaskHandle_t TaskClock_Handler;
+TaskHandle_t TaskDriver_Handler;
+TaskHandle_t TaskInterface_Handler;
 
 // Defs
 void displayInfo();
-void TaskGPS(void *pvParameters);
-void TaskLCD(void *pvParameters);
-void TaskClock(void *pvParameters);
+void TaskDriver(void *pvParameters);
+void TaskInterface(void *pvParameters);
 
 void setup()
 {
@@ -61,20 +58,20 @@ void setup()
 
   // Setup tasks
   xTaskCreate(
-      TaskGPS,           // A pointer to this task in memory
-      "GPS",             // A name just for humans
-      128,               // This stack size can be checked & adjusted by reading the Stack Highwater
-      NULL,              // Parameters passed to the task function
-      2,                 // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-      &TaskGPS_Handler); // Task handle
+      TaskDriver,           // A pointer to this task in memory
+      "Driver",             // A name just for humans
+      128,                  // This stack size can be checked & adjusted by reading the Stack Highwater
+      NULL,                 // Parameters passed to the task function
+      2,                    // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+      &TaskDriver_Handler); // Task handle
 
   xTaskCreate(
-      TaskLCD, // Handles human interface and serial interface
-      "LCD",
+      TaskInterface, // Handles human interface and serial interface
+      "Interface",
       256,
       NULL,
       2,
-      &TaskLCD_Handler);
+      &TaskInterface_Handler);
 }
 
 void loop()
@@ -91,42 +88,28 @@ void loop()
 //    *  - RTOS functions like async gps reading, we need to be sure we dont race condition and loose time!
 //    */
 
-void TaskGPS(void *pvParameters)
+void TaskDriver(void *pvParameters)
 {
   (void)pvParameters;
 
   // Setup for this task
   pinMode(LED_BUILTIN, OUTPUT);
 
-  // Local
-  int watermark = 99999;
+  // Prev time
+  TickType_t prevTime;
 
   // "Loop"
   for (;;)
   {
-    while (ss.available() > 0)
-    {
-      if (gps.encode(ss.read()))
-        ;
-      // displayInfo();
-    }
-
     // Blinky
     digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0);
 
-    // Waterline
-    if (uxTaskGetStackHighWaterMark(NULL) < watermark)
-    {
-      watermark = uxTaskGetStackHighWaterMark(NULL);
-      Log.warningln(F("Watermark dropped to %d bytes."), watermark);
-    }
+    // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
+    digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
+    delay(250);                                        // Delay while dir is latched
+    digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
 
-    // if (millis() > 5000 && gps.charsProcessed() < 10)
-    // {
-    //   Log.error(F("No GPS detected: check wiring."));
-    // }
-
-    vTaskDelay(60 / portTICK_PERIOD_MS);
+    xTaskDelayUntil(&prevTime, 60 / portTICK_PERIOD_MS); // Wait to resume
   }
 }
 
@@ -137,9 +120,12 @@ void TaskGPS(void *pvParameters)
 // Wire in the RTC today <-
 
 // Move me somewhere else!
-void TaskLCD(void *pvParameters)
+void TaskInterface(void *pvParameters)
 {
   (void)pvParameters;
+
+  // Begin
+  Log.infoln(F("Created %s Task, heap size is %d"), pcTaskGetName(NULL), uxTaskGetStackHighWaterMark(NULL));
 
   // Setup (lcd)
   lcd.begin(16, 2);
@@ -149,6 +135,9 @@ void TaskLCD(void *pvParameters)
 
   // Prev time
   TickType_t prevTime;
+
+  // Local
+  int watermark = 99999;
 
   // Setup (custom chars)
   lcd.createChar(0, upChar);
@@ -242,32 +231,25 @@ void TaskLCD(void *pvParameters)
       lcd.write((byte)3);
     }
 
+    // Process GPS
+    while (ss.available() > 0)
+    {
+      if (gps.encode(ss.read()))
+        ;
+      // displayInfo();
+    }
+
+    // Other stuff
+    // Waterline
+    if (uxTaskGetStackHighWaterMark(NULL) < watermark)
+    {
+      watermark = uxTaskGetStackHighWaterMark(NULL);
+      Log.warningln(F("%s: Watermark dropped to %d bytes."), pcTaskGetName(NULL), watermark);
+    }
+
     xTaskDelayUntil(&prevTime, 40 / portTICK_PERIOD_MS);
   }
 }
-
-// void TaskClock(void *pvParameters)
-// {
-//   (void)pvParameters;
-
-//   // Begin
-//   Log.infoln(F("Created %s Task, heap size is %d"), pcTaskGetName(NULL), uxTaskGetStackHighWaterMark(NULL));
-
-//   // Setup
-//   pinMode(LED_BUILTIN, OUTPUT);
-
-//   // Prev time
-//   TickType_t prevTime;
-
-//   for (;;)
-//   {
-//     // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
-//     digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0);    // Set the dir if even/odd
-//     delay(250);                                           // Delay while dir is latched
-//     digitalWrite(EN_PIN, gps.time.second() < 10);         // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
-//     xTaskDelayUntil(&prevTime, 500 / portTICK_PERIOD_MS); // Wait to resume
-//   }
-// }
 
 void displayInfo()
 {
