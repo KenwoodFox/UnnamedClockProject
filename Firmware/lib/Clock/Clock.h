@@ -78,4 +78,12 @@ public:
      *
      */
     void next();
+
+    /**
+     * @brief True when the algorithm is running behind and needs to catch up
+     *
+     * @return true   Clock needs to advance
+     * @return false  Normal operation
+     */
+    bool needAdvance();
 };

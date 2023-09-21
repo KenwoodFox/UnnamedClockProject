@@ -59,3 +59,10 @@ void Clock::next()
         curHour = 0;
     }
 }
+
+// show adj time not gps
+
+bool Clock::needAdvance()
+{
+    return setHour - curHour < 4; // Clock can only move 1 minute (hand) in 10 seconds, limiting catch-up speed
+}

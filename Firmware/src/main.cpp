@@ -106,15 +106,31 @@ void TaskDriver(void *pvParameters)
   // "Loop"
   for (;;)
   {
-    // Blinky
-    digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0);
-
     // Move clock
-    clock.move(gps.time.second() < 10, gps.time.minute() % 2 == 0);
-    clock.setTarget(gps.time.minute(), gps.time.hour());
+    if (!clock.needAdvance())
+    {
+      if (gps.time.second() < 10) // Normal operation
+      {
+        clock.move(true, gps.time.minute() % 2 == 0);                 // Begin move
+        xTaskDelayUntil(&prevTime, (10 * 1000) / portTICK_PERIOD_MS); // Resume in 10 seconds
+        clock.next();                                                 // Auto advance to the next
+        clock.move(false, false);                                     // Stop moving
+      }
+    }
+    else
+    {
+      ;
+    }
+
+    // Compare set time to target time, are they too disimilar?
+
+    clock.setTarget(gps.time.minute(), gps.time.hour()); // Set the target
+
+    // Blinky
+    digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0); // TODO: Move me, misc function
 
     // Waterline
-    if (uxTaskGetStackHighWaterMark(NULL) < watermark)
+    if (uxTaskGetStackHighWaterMark(NULL) < watermark) // TODO: Move me, misc function
     {
       watermark = uxTaskGetStackHighWaterMark(NULL);
       Log.warningln(F("%s: Watermark dropped to %d bytes."), pcTaskGetName(NULL), watermark);
