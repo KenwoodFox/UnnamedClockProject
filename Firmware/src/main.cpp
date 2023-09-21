@@ -42,14 +42,11 @@ void TaskInterface(void *pvParameters);
 
 void setup()
 {
-  // Pins
-  pinMode(DIR_PIN, OUTPUT);
-  pinMode(EN_PIN, OUTPUT);
-
   // Begin
   Serial.begin(115200);
   ss.begin(GPSBaud);
   Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+  clock.begin();
 
   Log.infoln(F("Starting version %s"), REVISION);
 
@@ -112,10 +109,9 @@ void TaskDriver(void *pvParameters)
     // Blinky
     digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0);
 
-    // We're going to do this here temporarily at least until we make a new dedicated task for all clock sync items
-    digitalWrite(DIR_PIN, gps.time.minute() % 2 == 0); // Set the dir if even/odd
-    delay(250);                                        // Delay while dir is latched
-    digitalWrite(EN_PIN, gps.time.second() < 10);      // Enable movement if first 10 seconds (Change this so that, on the minute mark, the hands have nearly finished moving)
+    // Move clock
+    clock.move(gps.time.second() < 10, gps.time.minute() % 2 == 0);
+    clock.setTarget(gps.time.minute(), gps.time.hour());
 
     // Waterline
     if (uxTaskGetStackHighWaterMark(NULL) < watermark)
@@ -171,7 +167,7 @@ void TaskInterface(void *pvParameters)
 
   // Menu index/temp values
   Menu menuIdx = Default;
-  char _lineBuf[16];
+  char _lineBuf[17]; // Screen is 16 long but null term is extra undrawn byte
 
   for (uint8_t i = 0; i < 5; i++)
   {
@@ -206,11 +202,18 @@ void TaskInterface(void *pvParameters)
       break;
 
     case ClockSet:;
+      // Clock Setting Menu
       lcd.setCursor(0, 0);
       lcd.print(F("Set Time"));
       lcd.setCursor(0, 1);
-      sprintf(_lineBuf, "%02d:%02d  (%02d)", gps.time.hour(), gps.time.minute(), gps.time.second());
+      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", gps.time.hour(), gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
       lcd.print(_lineBuf);
+
+      lcd.cursor();
+      lcd.setCursor(0, 1);
+      lcd.noBlink();
+      lcd.setCursor(1, 1);
+      lcd.noBlink();
       break;
 
     case ManualMode:;

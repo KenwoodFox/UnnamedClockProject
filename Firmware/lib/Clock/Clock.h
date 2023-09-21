@@ -18,12 +18,22 @@ private:
     uint8_t curHour = 0; // Eeprom at some point?
     uint8_t curMinute = 0;
 
+    // Target Positions
+    uint8_t setHour = 0;
+    uint8_t setMinute = 0;
+
     // Pins
     uint8_t enPin;
     uint8_t dirPin;
 
 public:
     Clock(uint8_t _enPin, uint8_t _dirPin);
+
+    /**
+     * @brief Important setup functions for clock.
+     *
+     */
+    void begin();
 
     /**
      * @brief Override the currently stored time.
@@ -34,10 +44,38 @@ public:
     void setTime(uint8_t _min, uint8_t _hr);
 
     /**
-     * @brief Advances to the next minute
+     * @brief Override the currently stored time.
      *
-     * @return true  Done
-     * @return false Continue
+     * @param _min Minute (0 - 59)
+     * @param _hr  Hour   (0 - 11)
      */
-    bool next();
+    void setTarget(uint8_t _min, uint8_t _hr);
+
+    /**
+     * @brief Get the current hour
+     *
+     * @return uint8_t Hour (0 - 11)
+     */
+    uint8_t getHour();
+
+    /**
+     * @brief Get the current minute
+     *
+     * @return uint8_t Minute (0 - 59)
+     */
+    uint8_t getMinute();
+
+    /**
+     * @brief Moves the clock
+     *
+     * @param enable  Enable Output
+     * @param dir     Movement Direction
+     */
+    void move(bool enable, bool dir);
+
+    /**
+     * @brief Advances to the next stored minute
+     *
+     */
+    void next();
 };
