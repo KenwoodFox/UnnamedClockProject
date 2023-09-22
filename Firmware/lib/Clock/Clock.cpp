@@ -11,6 +11,10 @@ void Clock::begin()
     // Setup pins
     pinMode(enPin, OUTPUT);
     pinMode(dirPin, OUTPUT);
+
+    // Load inital eeprom values
+    curHour = EEPROM.read(curHourAddr);
+    curMinute = EEPROM.read(curMinuteAddr);
 }
 
 uint8_t Clock::getHour()
@@ -64,6 +68,10 @@ void Clock::next()
     {
         curHour = 0;
     }
+
+    // Write EEP
+    EEPROM.write(curHourAddr, curHour);
+    EEPROM.write(curMinute, curMinuteAddr);
 }
 
 void Clock::previous()

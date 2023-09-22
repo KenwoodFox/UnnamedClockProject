@@ -4,7 +4,8 @@
  * @brief Synchronized Clock Driver Code
  */
 
-#include "Arduino.h"
+#include <Arduino.h>
+#include <EEPROM.h>
 
 /**
  * @brief Display object used to manipulate the clock controller.
@@ -15,8 +16,10 @@ class Clock
 {
 private:
     // Current Positions
-    uint8_t curHour = 2; // Eeprom at some point?
-    uint8_t curMinute = 20;
+    uint8_t curHourAddr = 0;   // Remove me!
+    uint8_t curMinuteAddr = 1; // Remove me!
+    uint8_t curHour = 0;       // Need to make eeprom rotate automatically!
+    uint8_t curMinute = 0;
 
     // Target Positions
     uint8_t setHour = 0;
