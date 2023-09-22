@@ -71,7 +71,7 @@ void Clock::next()
 
     // Write EEP
     EEPROM.write(curHourAddr, curHour);
-    EEPROM.write(curMinute, curMinuteAddr);
+    EEPROM.write(curMinuteAddr, curMinute);
 }
 
 void Clock::previous()
@@ -97,7 +97,7 @@ void Clock::previous()
 
 bool Clock::needAdvance()
 {
-    if (setHour - curHour < 4)
+    if (((setHour - curHour + 12) % 12) < 4)
     {
         // We're not too far behind
         return setMinute > curMinute || setHour > curHour;
