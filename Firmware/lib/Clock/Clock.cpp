@@ -35,6 +35,12 @@ void Clock::setTarget(uint8_t _min, uint8_t _hr)
     setMinute = _min;
 }
 
+void Clock::autoMove(bool enable)
+{
+    digitalWrite(dirPin, curMinute % 2 == 0); // Set the dir if even/odd
+    digitalWrite(enPin, enable);
+}
+
 void Clock::move(bool enable, bool dir)
 {
     digitalWrite(dirPin, dir); // Set the dir if even/odd
@@ -54,9 +60,28 @@ void Clock::next()
         return;
     }
 
-    if (curHour >= 12)
+    if (curHour > 11)
     {
         curHour = 0;
+    }
+}
+
+void Clock::previous()
+{
+    if (curMinute - 1 < 0)
+    {
+        curMinute = 59;
+        curHour--;
+    }
+    else
+    {
+        curMinute--;
+        return;
+    }
+
+    if (curHour < 0)
+    {
+        curHour = 11;
     }
 }
 
@@ -64,5 +89,9 @@ void Clock::next()
 
 bool Clock::needAdvance()
 {
-    return setHour - curHour < 4; // Clock can only move 1 minute (hand) in 10 seconds, limiting catch-up speed
+    if (setHour - curHour < 4)
+    {
+        // We're not too far behind
+        return setMinute > curMinute || setHour > curHour;
+    }
 }

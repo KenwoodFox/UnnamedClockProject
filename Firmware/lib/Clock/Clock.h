@@ -15,8 +15,8 @@ class Clock
 {
 private:
     // Current Positions
-    uint8_t curHour = 0; // Eeprom at some point?
-    uint8_t curMinute = 0;
+    uint8_t curHour = 2; // Eeprom at some point?
+    uint8_t curMinute = 20;
 
     // Target Positions
     uint8_t setHour = 0;
@@ -74,10 +74,25 @@ public:
     void move(bool enable, bool dir);
 
     /**
+     * @brief Automatically move the clock to the next minute
+     *
+     * @param enable Enable movement or not.
+     */
+    void autoMove(bool enable);
+
+    /**
      * @brief Advances to the next stored minute
      *
+     * @see Clock#previous:
      */
     void next();
+
+    /**
+     * @brief Inverse of next
+     *
+     * @see Clock#next:
+     */
+    void previous();
 
     /**
      * @brief True when the algorithm is running behind and needs to catch up

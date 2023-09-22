@@ -17,6 +17,7 @@
 
 // Config
 static const uint32_t GPSBaud = 9600;
+static const int mvmtTime = 8 * 1000; // Movement time in ms
 
 // Objects
 SoftwareSerial ss(RX_PIN, TX_PIN);
@@ -107,24 +108,22 @@ void TaskDriver(void *pvParameters)
   for (;;)
   {
     // Move clock
-    if (!clock.needAdvance())
-    {
-      if (gps.time.second() < 10) // Normal operation
+    if (gps.time.isValid())
+    { // Ready condition here
+      if (clock.needAdvance())
       {
-        clock.move(true, gps.time.minute() % 2 == 0);                 // Begin move
-        xTaskDelayUntil(&prevTime, (10 * 1000) / portTICK_PERIOD_MS); // Resume in 10 seconds
-        clock.next();                                                 // Auto advance to the next
-        clock.move(false, false);                                     // Stop moving
+        Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute());
+        clock.autoMove(true);                                      // Begin move
+        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS); // Resume in x seconds
+        clock.next();                                              // Auto advance to the next
+      }
+      else
+      {
+        clock.move(false, false); // Stop moving
       }
     }
-    else
-    {
-      ;
-    }
 
-    // Compare set time to target time, are they too disimilar?
-
-    clock.setTarget(gps.time.minute(), gps.time.hour()); // Set the target
+    clock.setTarget(gps.time.minute(), gps.time.hour() % 12); // Set the target
 
     // Blinky
     digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0); // TODO: Move me, misc function
@@ -136,7 +135,7 @@ void TaskDriver(void *pvParameters)
       Log.warningln(F("%s: Watermark dropped to %d bytes."), pcTaskGetName(NULL), watermark);
     }
 
-    xTaskDelayUntil(&prevTime, 60 / portTICK_PERIOD_MS); // Wait to resume
+    xTaskDelayUntil(&prevTime, 100 / portTICK_PERIOD_MS); // Wait to resume
   }
 }
 
@@ -182,7 +181,7 @@ void TaskInterface(void *pvParameters)
   menuBtn.attach(MENU_PIN, INPUT_PULLUP);
 
   // Menu index/temp values
-  Menu menuIdx = Default;
+  Menu menuIdx = ClockSet;
   char _lineBuf[17]; // Screen is 16 long but null term is extra undrawn byte
 
   for (uint8_t i = 0; i < 5; i++)
@@ -220,9 +219,9 @@ void TaskInterface(void *pvParameters)
     case ClockSet:;
       // Clock Setting Menu
       lcd.setCursor(0, 0);
-      lcd.print(F("Set Time"));
+      lcd.print(F("Set Time    "));
       lcd.setCursor(0, 1);
-      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", gps.time.hour(), gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
+      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", gps.time.hour() % 12, gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
       lcd.print(_lineBuf);
 
       lcd.cursor();
@@ -230,6 +229,16 @@ void TaskInterface(void *pvParameters)
       lcd.noBlink();
       lcd.setCursor(1, 1);
       lcd.noBlink();
+
+      if (upBtn.pressed())
+      {
+        clock.next();
+      }
+
+      if (downBtn.pressed())
+      {
+        clock.previous();
+      }
       break;
 
     case ManualMode:;
@@ -256,7 +265,7 @@ void TaskInterface(void *pvParameters)
 
     // Overlays!
     lcd.setCursor(15, 0);
-    if (true) // todo.. do something with this later..
+    if (clock.needAdvance())
     {
       lcd.write((byte)((gps.time.second() % 4) + 2));
     }
