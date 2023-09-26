@@ -31,6 +31,10 @@ void Clock::setTime(uint8_t _min, uint8_t _hr)
 {
     curHour = _hr;
     curMinute = _min;
+
+    // Write EEP
+    EEPROM.write(curHourAddr, curHour);
+    EEPROM.write(curMinuteAddr, curMinute);
 }
 
 void Clock::setTarget(uint8_t _min, uint8_t _hr)

@@ -37,7 +37,7 @@ clean:	## Cleans the repo of artefacts
 lint:	## De-lints the repo
 	pio check
 
-test:	## Run automated tests
+tests:	## Run automated tests
 	pio test --upload-port $(SERIAL_DEV)
 
 debug: flash monitor	## Flashes then Monitors
@@ -51,5 +51,8 @@ flash-remote:
 
 monitor-remote:
 	pio remote --agent silvertech-desk device monitor
+
+tests-remote:	## Run automated tests (remote)
+	pio remote --agent silvertech-desk test
 
 debug-remote: flash-remote monitor-remote
