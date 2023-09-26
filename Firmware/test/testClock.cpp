@@ -20,6 +20,10 @@ void tearDown(void)
 
 /* === Tests === */
 
+/**
+ * @brief Tests to make sure that the hour set is the hour read back.
+ *
+ */
 void test_time_set_hour(void)
 {
     // Set the current time
@@ -27,6 +31,10 @@ void test_time_set_hour(void)
     TEST_ASSERT_EQUAL(3, clock.getHour()); // current time should equal 3
 }
 
+/**
+ * @brief Confirms that clock will advance when the error is in range
+ *
+ */
 void test_advance_in_range(void)
 {
     // Set the time and hands
@@ -35,6 +43,10 @@ void test_advance_in_range(void)
     TEST_ASSERT_TRUE(clock.needAdvance());
 }
 
+/**
+ * @brief Confirms that the clock will NOT advance when the error is out of range
+ *
+ */
 void test_advance_out_of_range(void)
 {
     // Set the time and hands
@@ -43,12 +55,28 @@ void test_advance_out_of_range(void)
     TEST_ASSERT_FALSE(clock.needAdvance());
 }
 
+/**
+ * @brief Tests that the clock advance is cyclic (it wraps around)
+ *
+ */
 void test_advance_cyclical(void)
 {
     // Set the time and hands
     clock.setTime(59, 11); // Set to 11:59
     clock.setTarget(0, 0); // Target is 12:00
     TEST_ASSERT_TRUE(clock.needAdvance());
+}
+
+/**
+ * @brief Tests that the LCD works
+ *
+ */
+void test_LCD(void)
+{
+    // Set the time and hands
+    lcd.setCursor(0, 1);
+
+    TEST_ASSERT_GREATER_OR_EQUAL(1, lcd.print(F("Test Mode...")));
 }
 
 int runUnityTests(void)
@@ -58,6 +86,7 @@ int runUnityTests(void)
     RUN_TEST(test_advance_in_range);
     RUN_TEST(test_advance_out_of_range);
     RUN_TEST(test_advance_cyclical);
+    RUN_TEST(test_LCD);
     return UNITY_END();
 }
 
