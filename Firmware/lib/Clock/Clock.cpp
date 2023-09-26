@@ -104,6 +104,7 @@ bool Clock::needAdvance()
     if (((setHour - curHour + 12) % 12) < 4)
     {
         // We're not too far behind
-        return setMinute > curMinute || setHour > curHour;
+        return setMinute > curMinute || setHour != curHour;
     }
+    return false;
 }

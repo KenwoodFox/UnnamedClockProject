@@ -1,9 +1,12 @@
 #include <unity.h>
+#include <LiquidCrystal.h>
+
 #include "Clock.h"
 #include "boardPins.h"
 
 // Objects
 Clock clock(EN_PIN, DIR_PIN);
+LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 void setUp(void)
 {
@@ -40,19 +43,28 @@ void test_advance_out_of_range(void)
     TEST_ASSERT_FALSE(clock.needAdvance());
 }
 
+void test_advance_cyclical(void)
+{
+    // Set the time and hands
+    clock.setTime(59, 11); // Set to 11:59
+    clock.setTarget(0, 0); // Target is 12:00
+    TEST_ASSERT_TRUE(clock.needAdvance());
+}
+
 int runUnityTests(void)
 {
     UNITY_BEGIN();
     RUN_TEST(test_time_set_hour);
     RUN_TEST(test_advance_in_range);
     RUN_TEST(test_advance_out_of_range);
+    RUN_TEST(test_advance_cyclical);
     return UNITY_END();
 }
 
 /* === Test code! === */
 
 /**
- * For Arduino framework
+ * Arduino simulator setup code
  */
 void setup()
 {
@@ -62,6 +74,12 @@ void setup()
 
     // Setup clock
     clock.begin();
+
+    // Hi
+    lcd.begin(16, 2);
+    lcd.print(REVISION);
+    lcd.setCursor(0, 1);
+    lcd.print(F("Testing..."));
 
     runUnityTests();
 }
