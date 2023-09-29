@@ -45,7 +45,7 @@ void Clock::setTarget(uint8_t _min, uint8_t _hr)
 
 void Clock::autoMove(bool enable)
 {
-    digitalWrite(dirPin, curMinute % 2 == 0); // Set the dir if even/odd
+    digitalWrite(dirPin, !(curMinute % 2 == 0)); // Set the dir if even/odd
     digitalWrite(enPin, enable);
 }
 
