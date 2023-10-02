@@ -1828,6 +1828,11 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid ce251c72-b237-4d4d-99f6-45c7b315b25e)
   )
+  (text "Recomend adding a larger LED\noutput or switched output for \nexternal lights like, need human\ninput light."
+    (at 169.545 152.4 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid ddda1220-a72d-4436-b63b-1491a85e35da)
+  )
   (text "LEDs" (at 276.225 130.81 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid efa3d8a9-5e97-4b7a-a61d-cea8353e4c29)
