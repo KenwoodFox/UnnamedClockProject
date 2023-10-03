@@ -9,7 +9,7 @@ const uint8_t numMenuItems = 3;
 
 enum Menu
 {
-    Default,
+    Status,
     ClockSet,
     ManualMode,
 };

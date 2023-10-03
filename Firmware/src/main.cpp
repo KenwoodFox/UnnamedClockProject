@@ -181,7 +181,7 @@ void TaskInterface(void *pvParameters)
   menuBtn.attach(MENU_PIN, INPUT_PULLUP);
 
   // Menu index/temp values
-  Menu menuIdx = ClockSet;
+  Menu menuIdx = Status;
   char _lineBuf[17]; // Screen is 16 long but null term is extra undrawn byte
 
   for (uint8_t i = 0; i < 5; i++)
@@ -201,7 +201,7 @@ void TaskInterface(void *pvParameters)
 
     switch (menuIdx)
     {
-    case Default:;
+    case Status:;
       lcd.setCursor(0, 0);
       if (gps.date.isValid() && gps.satellites.value() >= 4)
       {
@@ -247,7 +247,9 @@ void TaskInterface(void *pvParameters)
       break;
 
     default:
-      /* Not to be confused with Default (the enum) this is the fallthrough, we should never get here! */
+      /* Not to be confused with Status (the enum) this is the fallthrough, we should never get here! */
+      lcd.setCursor(0, 0);
+      lcd.print(F("Error: No Menu!"));
       break;
     }
 

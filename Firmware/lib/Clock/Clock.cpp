@@ -43,16 +43,21 @@ void Clock::setTarget(uint8_t _min, uint8_t _hr)
     setMinute = _min;
 }
 
+void Clock::setMovementEnabled(bool _set)
+{
+    movementEnabled = _set;
+}
+
 void Clock::autoMove(bool enable)
 {
     digitalWrite(dirPin, !(curMinute % 2 == 0)); // Set the dir if even/odd
-    digitalWrite(enPin, enable);
+    digitalWrite(enPin, enable && movementEnabled);
 }
 
 void Clock::move(bool enable, bool dir)
 {
     digitalWrite(dirPin, dir); // Set the dir if even/odd
-    digitalWrite(enPin, enable);
+    digitalWrite(enPin, enable && movementEnabled);
 }
 
 void Clock::next()

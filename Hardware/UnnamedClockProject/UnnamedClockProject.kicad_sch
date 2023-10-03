@@ -3497,7 +3497,7 @@
     (property "Value" "Arduino_UNO_R3" (at 155.2291 98.425 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "Module:Arduino_UNO_R3" (at 147.955 123.19 0)
+    (property "Footprint" "ac1ja:Arduino_Uno_Nano_Combo" (at 147.955 123.19 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
     (property "Datasheet" "https://www.arduino.cc/en/Main/arduinoBoardUno" (at 147.955 123.19 0)

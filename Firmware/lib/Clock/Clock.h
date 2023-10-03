@@ -29,6 +29,9 @@ private:
     uint8_t enPin;
     uint8_t dirPin;
 
+    // Locks
+    bool movementEnabled = false;
+
 public:
     Clock(uint8_t _enPin, uint8_t _dirPin);
 
@@ -53,6 +56,13 @@ public:
      * @param _hr  Hour   (0 - 11)
      */
     void setTarget(uint8_t _min, uint8_t _hr);
+
+    /**
+     * @brief Set or unset movement
+     *
+     * @param _set True or False
+     */
+    void setMovementEnabled(bool _set);
 
     /**
      * @brief Get the current hour
