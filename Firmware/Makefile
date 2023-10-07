@@ -37,7 +37,7 @@ clean:	## Cleans the repo of artefacts
 lint:	## De-lints the repo
 	pio check
 
-test:	## Run automated tests
+tests:	## Run automated tests
 	pio test --upload-port $(SERIAL_DEV)
 
 debug: flash monitor	## Flashes then Monitors
@@ -47,9 +47,12 @@ monitor:	## Monitors the device serial
 
 # Remote versions of the above
 flash-remote:
-	pio remote --agent silvertech-iot run --target upload
+	pio remote --agent silvertech-desk run --target upload
 
 monitor-remote:
-	pio remote --agent silvertech-iot device monitor
+	pio remote --agent silvertech-desk device monitor
+
+tests-remote:	## Run automated tests (remote)
+	pio remote --agent silvertech-desk test
 
 debug-remote: flash-remote monitor-remote
