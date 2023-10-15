@@ -36,6 +36,9 @@ Bounce2::Button menuBtn = Bounce2::Button();
 TaskHandle_t TaskDriver_Handler;
 TaskHandle_t TaskInterface_Handler;
 
+// Special modes
+bool manualOverride = false; // Used when manually overriding
+
 // Defs
 void displayInfo();
 void TaskDriver(void *pvParameters);
@@ -110,7 +113,7 @@ void TaskDriver(void *pvParameters)
     // Move clock
     if (gps.time.isValid())
     { // Ready condition here
-      if (clock.needAdvance())
+      if (clock.needAdvance() || manualOverride)
       {
         Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute());
         clock.autoMove(true);                                      // Begin move
@@ -244,6 +247,10 @@ void TaskInterface(void *pvParameters)
     case ManualMode:;
       lcd.setCursor(0, 0);
       lcd.print(F("Manual Mode"));
+
+      // Update manual override
+      manualOverride = upBtn.isPressed();
+
       break;
 
     default:
