@@ -9,8 +9,8 @@
 #include <ArduinoLog.h>
 #include <Bounce2.h>
 #include <LiquidCrystal.h>
-#include <Timezone.h>
-#include <RTClib.h>
+// #include <Timezone.h>
+// #include <RTClib.h>
 
 #include "Clock.h"
 #include "boardPins.h"
@@ -73,7 +73,7 @@ void setup()
   xTaskCreate(
       TaskDriver,           // A pointer to this task in memory
       "Driver",             // A name just for humans
-      130,                  // This stack size can be checked & adjusted by reading the Stack Highwater
+      160,                  // This stack size can be checked & adjusted by reading the Stack Highwater
       NULL,                 // Parameters passed to the task function
       2,                    // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
       &TaskDriver_Handler); // Task handle
@@ -82,7 +82,7 @@ void setup()
   xTaskCreate(
       TaskInterface, // Handles human interface and serial interface
       "Interface",
-      220,
+      200,
       NULL,
       2,
       &TaskInterface_Handler);
@@ -91,7 +91,7 @@ void setup()
 void loop()
 {
   // Empty. Things are done in Tasks.
-  vTaskDelete(NULL); // Exit task
+  // vTaskDelete(NULL); // Exit task
 }
 
 // Todo move this somewhere else!
