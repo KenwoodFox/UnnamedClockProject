@@ -3,6 +3,7 @@
 
 #include "Clock.h"
 #include "boardPins.h"
+#include "timeTools.h"
 
 // Objects
 Clock clock(EN_PIN, DIR_PIN);
@@ -79,6 +80,36 @@ void test_LCD(void)
     TEST_ASSERT_GREATER_OR_EQUAL(1, lcd.print(F("Test Mode...")));
 }
 
+/**
+ * @brief Tests to make sure that the timezone can do a simple offset
+ *
+ */
+void test_timezone_hour_simple(void)
+{
+    // Hour 9 (9am UTC) should be (5am)
+    TEST_ASSERT_EQUAL(5, getLocalHour(9));
+}
+
+/**
+ * @brief Tests to make sure that the timezone can rollaround
+ *
+ */
+void test_timezone_hour_rollaround(void)
+{
+    // Hour 15 (3pm UTC) should be (11am)
+    TEST_ASSERT_EQUAL(11, getLocalHour(15));
+}
+
+/**
+ * @brief Tests timezone response at midnight
+ *
+ */
+void test_timezone_hour_midnight(void)
+{
+    // Hour 0 (midnight UTC) should be (8pm)
+    TEST_ASSERT_EQUAL(8, getLocalHour(0));
+}
+
 int runUnityTests(void)
 {
     UNITY_BEGIN();
@@ -87,6 +118,9 @@ int runUnityTests(void)
     RUN_TEST(test_advance_out_of_range);
     RUN_TEST(test_advance_cyclical);
     RUN_TEST(test_LCD);
+    RUN_TEST(test_timezone_hour_rollaround);
+    RUN_TEST(test_timezone_hour_simple);
+    RUN_TEST(test_timezone_hour_midnight);
     return UNITY_END();
 }
 

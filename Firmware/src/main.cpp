@@ -9,13 +9,14 @@
 #include <ArduinoLog.h>
 #include <Bounce2.h>
 #include <LiquidCrystal.h>
-#include <Timezone.h>
-#include <RTClib.h>
+// #include <Timezone.h>
+// #include <RTClib.h>
 
 #include "Clock.h"
 #include "boardPins.h"
 #include "menuEnum.h"
 #include "customChars.h"
+#include "timeTools.h"
 
 // Config
 static const uint32_t GPSBaud = 9600;
@@ -26,7 +27,7 @@ SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 Clock clock(EN_PIN, DIR_PIN);
-RTC_DS3231 rtc;
+// RTC_DS3231 rtc;
 
 // Buttons
 Bounce2::Button upBtn = Bounce2::Button();
@@ -42,10 +43,10 @@ TaskHandle_t TaskInterface_Handler;
 // Special modes
 bool manualOverride = false; // Used when manually overriding
 
-// Timezone
-TimeChangeRule myDST = {"EDT", Second, Sun, Mar, 2, -240}; // Daylight time = UTC - 4 hours
-TimeChangeRule mySTD = {"EST", First, Sun, Nov, 2, -300};  // Standard time = UTC - 5 hours
-Timezone myTZ(myDST, mySTD);
+// // Timezone
+// TimeChangeRule myDST = {"EDT", Second, Sun, Mar, 2, -240}; // Daylight time = UTC - 4 hours
+// TimeChangeRule mySTD = {"EST", First, Sun, Nov, 2, -300};  // Standard time = UTC - 5 hours
+// Timezone myTZ(myDST, mySTD);
 
 // Defs
 void displayInfo();
@@ -92,18 +93,6 @@ void loop()
   // vTaskDelete(NULL); // Exit task
 }
 
-// Todo move this somewhere else!
-int getLocalHour()
-{
-  // Adjust the RTC to the current GPS time. (eventually move this to a sync function)
-  // rtc.adjust(myTZ.toLocal(DateTime(gps.date.year(), gps.date.month(), gps.date.day(), gps.time.hour(), gps.time.minute(), gps.time.second()).unixtime()));
-
-  // Most efficent way to do this (i hope)
-  time_t _local = myTZ.toLocal(DateTime(gps.date.year(), gps.date.month(), gps.date.day(), gps.time.hour(), gps.time.minute(), gps.time.second()).unixtime());
-
-  return hour(_local);
-}
-
 void TaskDriver(void *pvParameters)
 {
   (void)pvParameters;
@@ -141,7 +130,7 @@ void TaskDriver(void *pvParameters)
       }
     }
 
-    clock.setTarget(gps.time.minute(), getLocalHour() % 12); // Set the target
+    clock.setTarget(gps.time.minute(), getLocalHour(gps.time.hour())); // Set the target
 
     // Blinky
     digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0); // TODO: Move me, misc function
@@ -239,7 +228,7 @@ void TaskInterface(void *pvParameters)
       lcd.setCursor(0, 0);
       lcd.print(F("Set Time    "));
       lcd.setCursor(0, 1);
-      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", getLocalHour() % 12, gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
+      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", getLocalHour(gps.time.hour()), gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
       lcd.print(_lineBuf);
 
       lcd.cursor();
