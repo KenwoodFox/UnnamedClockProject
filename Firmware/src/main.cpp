@@ -236,11 +236,13 @@ void TaskInterface(void *pvParameters)
       if (upBtn.pressed())
       {
         clock.next();
+        clock.setMovementEnabled(true);
       }
 
       if (downBtn.pressed())
       {
         clock.previous();
+        clock.setMovementEnabled(true);
       }
       break;
 
@@ -250,6 +252,7 @@ void TaskInterface(void *pvParameters)
 
       // Update manual override
       manualOverride = upBtn.isPressed();
+      clock.setMovementEnabled(true);
 
       break;
 
