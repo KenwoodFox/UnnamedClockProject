@@ -9,6 +9,8 @@
 #include <ArduinoLog.h>
 #include <Bounce2.h>
 #include <LiquidCrystal.h>
+#include <Timezone.h>
+#include <RTClib.h>
 
 #include "Clock.h"
 #include "boardPins.h"
@@ -24,6 +26,7 @@ SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 Clock clock(EN_PIN, DIR_PIN);
+// RTC_DS3231 rtc;
 
 // Buttons
 Bounce2::Button upBtn = Bounce2::Button();
@@ -39,6 +42,11 @@ TaskHandle_t TaskInterface_Handler;
 // Special modes
 bool manualOverride = false; // Used when manually overriding
 
+// Timezone
+// TimeChangeRule myDST = {"EDT", Second, Sun, Mar, 2, -240}; // Daylight time = UTC - 4 hours
+// TimeChangeRule mySTD = {"EST", First, Sun, Nov, 2, -300};  // Standard time = UTC - 5 hours
+// Timezone myTZ(myDST, mySTD);
+
 // Defs
 void displayInfo();
 void TaskDriver(void *pvParameters);
@@ -51,6 +59,7 @@ void setup()
   ss.begin(GPSBaud);
   Log.begin(LOG_LEVEL_VERBOSE, &Serial);
   clock.begin();
+  // rtc.begin();
 
   Log.infoln(F("Starting version %s"), REVISION);
 
@@ -60,18 +69,20 @@ void setup()
    */
 
   // Setup tasks
+  Log.infoln(F("Starting Task Driver"));
   xTaskCreate(
       TaskDriver,           // A pointer to this task in memory
       "Driver",             // A name just for humans
-      160,                  // This stack size can be checked & adjusted by reading the Stack Highwater
+      130,                  // This stack size can be checked & adjusted by reading the Stack Highwater
       NULL,                 // Parameters passed to the task function
       2,                    // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
       &TaskDriver_Handler); // Task handle
 
+  Log.infoln(F("Starting Task Interface"));
   xTaskCreate(
       TaskInterface, // Handles human interface and serial interface
       "Interface",
-      200,
+      220,
       NULL,
       2,
       &TaskInterface_Handler);
@@ -80,16 +91,17 @@ void setup()
 void loop()
 {
   // Empty. Things are done in Tasks.
-  // vTaskDelete(NULL); // Exit task
+  vTaskDelete(NULL); // Exit task
 }
 
-//   /* TODO:
-//    * Lots of upgrades have to happen in here, namely:
-//    * - Move the CLOCK interface to its own object
-//    *  - Need to centralize components like safe power-on-reset (eeprom)
-//    *  - Need to ensure that we dont move unless we're 100% sure we can record what we're doing (so we never drift!)
-//    *  - RTOS functions like async gps reading, we need to be sure we dont race condition and loose time!
-//    */
+// Todo move this somewhere else!
+// int getLocalHour()
+// {
+//   // Adjust the RTC to the current GPS time. (eventually move this to a sync function)
+//   rtc.adjust(myTZ.toLocal(DateTime(gps.date.year(), gps.date.month(), gps.date.day(), gps.time.hour(), gps.time.minute(), gps.time.second()).unixtime()));
+
+//   return rtc.now().hour();
+// }
 
 void TaskDriver(void *pvParameters)
 {
@@ -115,10 +127,10 @@ void TaskDriver(void *pvParameters)
     { // Ready condition here
       if (clock.needAdvance() || manualOverride)
       {
-        Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute());
-        clock.autoMove(true);                                      // Begin move
-        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS); // Resume in x seconds
-        clock.next();                                              // Auto advance to the next
+        Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute()); // The minute will never change
+        clock.autoMove(true);                                                              // Begin move
+        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS);                         // Resume in x seconds
+        clock.next();                                                                      // Auto advance to the next
       }
       else
       {
