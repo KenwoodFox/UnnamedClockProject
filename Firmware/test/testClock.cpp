@@ -39,8 +39,9 @@ void test_time_set_hour(void)
 void test_advance_in_range(void)
 {
     // Set the time and hands
-    clock.setTime(0, 3);    // Set to 3:00
-    clock.setTarget(30, 3); // Target is 3:30
+    clock.setTime(0, 3);            // Set to 3:00
+    clock.setTarget(30, 3);         // Target is 3:30
+    clock.setMovementEnabled(true); // Enable movement
     TEST_ASSERT_TRUE(clock.needAdvance());
 }
 
@@ -51,8 +52,9 @@ void test_advance_in_range(void)
 void test_advance_out_of_range(void)
 {
     // Set the time and hands
-    clock.setTime(0, 3);    // Set to 3:00
-    clock.setTarget(30, 9); // Target is 9:30
+    clock.setTime(0, 3);            // Set to 3:00
+    clock.setTarget(30, 9);         // Target is 9:30
+    clock.setMovementEnabled(true); // Enable movement (even though it should NOT move in this test)
     TEST_ASSERT_FALSE(clock.needAdvance());
 }
 

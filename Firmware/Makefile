@@ -53,6 +53,6 @@ monitor-remote:
 	pio remote --agent silvertech-desk device monitor
 
 tests-remote:	## Run automated tests (remote)
-	pio remote --agent silvertech-desk test
+	pio remote --agent silvertech-iot test
 
 debug-remote: flash-remote monitor-remote
