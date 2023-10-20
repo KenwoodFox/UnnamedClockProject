@@ -29,10 +29,10 @@ private:
     uint8_t enPin;
     uint8_t dirPin;
 
+public:
     // Locks
     bool movementEnabled = false;
 
-public:
     Clock(uint8_t _enPin, uint8_t _dirPin);
 
     /**

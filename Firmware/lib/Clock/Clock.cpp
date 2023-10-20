@@ -106,6 +106,11 @@ void Clock::previous()
 
 bool Clock::needAdvance()
 {
+    if (!movementEnabled)
+    {
+        return false;
+    }
+
     if (((setHour - curHour + 12) % 12) < 4)
     {
         // We're not too far behind
