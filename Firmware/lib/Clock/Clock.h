@@ -29,6 +29,9 @@ private:
     uint8_t enPin;
     uint8_t dirPin;
 
+    // Settings
+    bool isLeftHanded = false;
+
 public:
     // Locks
     bool movementEnabled = false;
@@ -56,6 +59,15 @@ public:
      * @param _hr  Hour   (0 - 11)
      */
     void setTarget(uint8_t _min, uint8_t _hr);
+
+    /**
+     * @brief Set if left-handed true or false
+     *
+     * @param set whether to toggle the value
+     * @return true is currently left handed
+     * @return false is not left handed
+     */
+    bool setLeftHanded(bool set = false);
 
     /**
      * @brief Set or unset movement

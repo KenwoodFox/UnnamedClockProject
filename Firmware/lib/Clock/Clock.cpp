@@ -48,6 +48,16 @@ void Clock::setMovementEnabled(bool _set)
     movementEnabled = _set;
 }
 
+bool Clock::setLeftHanded(bool set)
+{
+    if (set)
+    {
+        isLeftHanded = !isLeftHanded; // Toggle
+    }
+
+    return isLeftHanded;
+}
+
 void Clock::autoMove(bool enable)
 {
     digitalWrite(dirPin, !(curMinute % 2 == 0)); // Set the dir if even/odd

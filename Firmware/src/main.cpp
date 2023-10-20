@@ -264,6 +264,14 @@ void TaskInterface(void *pvParameters)
 
       break;
 
+    case LeftHandedNess:;
+      lcd.setCursor(0, 0);
+      lcd.print(F("Left hand L1L2?"));
+
+      clock.setLeftHanded();
+
+      break;
+
     default:
       /* Not to be confused with Status (the enum) this is the fallthrough, we should never get here! */
       lcd.setCursor(0, 0);

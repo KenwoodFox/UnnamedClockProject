@@ -112,6 +112,25 @@ void test_timezone_hour_midnight(void)
     TEST_ASSERT_EQUAL(8, getLocalHour(0));
 }
 
+/**
+ * @brief Test left handed is false on startup
+ * TODO: Remove later and replace with eeprom
+ */
+void test_left_handed_startup(void)
+{
+    TEST_ASSERT_FALSE(clock.setLeftHanded());
+}
+
+/**
+ * @brief Test left handed is settable
+ *
+ */
+void test_left_handed_set(void)
+{
+    TEST_ASSERT_TRUE(clock.setLeftHanded(true));
+    TEST_ASSERT_FALSE(clock.setLeftHanded(true));
+}
+
 int runUnityTests(void)
 {
     UNITY_BEGIN();
@@ -123,6 +142,8 @@ int runUnityTests(void)
     RUN_TEST(test_timezone_hour_rollaround);
     RUN_TEST(test_timezone_hour_simple);
     RUN_TEST(test_timezone_hour_midnight);
+    RUN_TEST(test_left_handed_startup);
+    RUN_TEST(test_left_handed_set);
     return UNITY_END();
 }
 

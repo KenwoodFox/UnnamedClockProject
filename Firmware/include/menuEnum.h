@@ -12,6 +12,7 @@ enum Menu
     Status,
     ClockSet,
     ManualMode,
+    LeftHandedNess,
 };
 
 inline Menu operator++(Menu &eDOW, int)
