@@ -21,6 +21,7 @@
 // Config
 static const uint32_t GPSBaud = 9600;
 static const int mvmtTime = 10 * 1000; // Movement time in ms
+static const int pauseTime = 2 * 1000; // Time between moves
 
 // Objects
 SoftwareSerial ss(RX_PIN, TX_PIN);
@@ -121,8 +122,9 @@ void TaskDriver(void *pvParameters)
       {
         Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute()); // The minute will never change
         clock.autoMove(true);                                                              // Begin move
-        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS);                         // Resume in x seconds
+        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS);                         // Time spent moving
         clock.next();                                                                      // Auto advance to the next
+        xTaskDelayUntil(&prevTime, pauseTime / portTICK_PERIOD_MS);                        // Time between moves
       }
       else
       {
@@ -236,6 +238,8 @@ void TaskInterface(void *pvParameters)
       lcd.noBlink();
       lcd.setCursor(1, 1);
       lcd.noBlink();
+
+      // TODO: Implement cursor select (for hours and minutes)
 
       if (upBtn.pressed())
       {
