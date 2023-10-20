@@ -129,6 +129,7 @@ void test_left_handed_set(void)
 {
     TEST_ASSERT_TRUE(clock.setLeftHanded(true));
     TEST_ASSERT_FALSE(clock.setLeftHanded(true));
+    TEST_ASSERT_TRUE(clock.setLeftHanded(true));
 }
 
 int runUnityTests(void)

@@ -267,8 +267,14 @@ void TaskInterface(void *pvParameters)
     case LeftHandedNess:;
       lcd.setCursor(0, 0);
       lcd.print(F("Left hand L1L2?"));
+      lcd.setCursor(0, 1);
+      sprintf(_lineBuf, "isLeftHanded %d", clock.setLeftHanded());
+      lcd.print(_lineBuf);
 
-      clock.setLeftHanded();
+      if (upBtn.pressed() || downBtn.pressed())
+      {
+        clock.setLeftHanded(true);
+      }
 
       break;
 
