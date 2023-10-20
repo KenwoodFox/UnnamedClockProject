@@ -20,7 +20,7 @@
 
 // Config
 static const uint32_t GPSBaud = 9600;
-static const int mvmtTime = 8 * 1000; // Movement time in ms
+static const int mvmtTime = 10 * 1000; // Movement time in ms
 
 // Objects
 SoftwareSerial ss(RX_PIN, TX_PIN);
