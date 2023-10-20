@@ -9,21 +9,26 @@
 #include <ArduinoLog.h>
 #include <Bounce2.h>
 #include <LiquidCrystal.h>
+// #include <Timezone.h>
+// #include <RTClib.h>
 
 #include "Clock.h"
 #include "boardPins.h"
 #include "menuEnum.h"
 #include "customChars.h"
+#include "timeTools.h"
 
 // Config
 static const uint32_t GPSBaud = 9600;
-static const int mvmtTime = 8 * 1000; // Movement time in ms
+static const int mvmtTime = 10 * 1000; // Movement time in ms
+static const int pauseTime = 2 * 1000; // Time between moves
 
 // Objects
 SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 Clock clock(EN_PIN, DIR_PIN);
+// RTC_DS3231 rtc;
 
 // Buttons
 Bounce2::Button upBtn = Bounce2::Button();
@@ -36,6 +41,14 @@ Bounce2::Button menuBtn = Bounce2::Button();
 TaskHandle_t TaskDriver_Handler;
 TaskHandle_t TaskInterface_Handler;
 
+// Special modes
+bool manualOverride = false; // Used when manually overriding
+
+// // Timezone
+// TimeChangeRule myDST = {"EDT", Second, Sun, Mar, 2, -240}; // Daylight time = UTC - 4 hours
+// TimeChangeRule mySTD = {"EST", First, Sun, Nov, 2, -300};  // Standard time = UTC - 5 hours
+// Timezone myTZ(myDST, mySTD);
+
 // Defs
 void displayInfo();
 void TaskDriver(void *pvParameters);
@@ -47,7 +60,6 @@ void setup()
   Serial.begin(115200);
   ss.begin(GPSBaud);
   Log.begin(LOG_LEVEL_VERBOSE, &Serial);
-  clock.begin();
 
   Log.infoln(F("Starting version %s"), REVISION);
 
@@ -57,6 +69,7 @@ void setup()
    */
 
   // Setup tasks
+  Log.infoln(F("Starting Task Driver"));
   xTaskCreate(
       TaskDriver,           // A pointer to this task in memory
       "Driver",             // A name just for humans
@@ -65,6 +78,7 @@ void setup()
       2,                    // Priority, with 2 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
       &TaskDriver_Handler); // Task handle
 
+  Log.infoln(F("Starting Task Interface"));
   xTaskCreate(
       TaskInterface, // Handles human interface and serial interface
       "Interface",
@@ -80,14 +94,6 @@ void loop()
   // vTaskDelete(NULL); // Exit task
 }
 
-//   /* TODO:
-//    * Lots of upgrades have to happen in here, namely:
-//    * - Move the CLOCK interface to its own object
-//    *  - Need to centralize components like safe power-on-reset (eeprom)
-//    *  - Need to ensure that we dont move unless we're 100% sure we can record what we're doing (so we never drift!)
-//    *  - RTOS functions like async gps reading, we need to be sure we dont race condition and loose time!
-//    */
-
 void TaskDriver(void *pvParameters)
 {
   (void)pvParameters;
@@ -97,6 +103,8 @@ void TaskDriver(void *pvParameters)
 
   // Setup for this task
   pinMode(LED_BUILTIN, OUTPUT);
+  clock.begin();
+  // rtc.begin();
 
   // Prev time
   TickType_t prevTime;
@@ -110,12 +118,13 @@ void TaskDriver(void *pvParameters)
     // Move clock
     if (gps.time.isValid())
     { // Ready condition here
-      if (clock.needAdvance())
+      if (clock.needAdvance() || manualOverride)
       {
-        Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute());
-        clock.autoMove(true);                                      // Begin move
-        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS); // Resume in x seconds
-        clock.next();                                              // Auto advance to the next
+        Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute()); // The minute will never change
+        clock.autoMove(true);                                                              // Begin move
+        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS);                         // Time spent moving
+        clock.next();                                                                      // Auto advance to the next
+        xTaskDelayUntil(&prevTime, pauseTime / portTICK_PERIOD_MS);                        // Time between moves
       }
       else
       {
@@ -123,7 +132,7 @@ void TaskDriver(void *pvParameters)
       }
     }
 
-    clock.setTarget(gps.time.minute(), gps.time.hour() % 12); // Set the target
+    clock.setTarget(gps.time.minute(), getLocalHour(gps.time.hour())); // Set the target
 
     // Blinky
     digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0); // TODO: Move me, misc function
@@ -181,7 +190,7 @@ void TaskInterface(void *pvParameters)
   menuBtn.attach(MENU_PIN, INPUT_PULLUP);
 
   // Menu index/temp values
-  Menu menuIdx = Status;
+  Menu menuIdx = ClockSet;
   char _lineBuf[17]; // Screen is 16 long but null term is extra undrawn byte
 
   for (uint8_t i = 0; i < 5; i++)
@@ -221,7 +230,7 @@ void TaskInterface(void *pvParameters)
       lcd.setCursor(0, 0);
       lcd.print(F("Set Time    "));
       lcd.setCursor(0, 1);
-      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", gps.time.hour() % 12, gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
+      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", getLocalHour(gps.time.hour()), gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
       lcd.print(_lineBuf);
 
       lcd.cursor();
@@ -230,20 +239,29 @@ void TaskInterface(void *pvParameters)
       lcd.setCursor(1, 1);
       lcd.noBlink();
 
+      // TODO: Implement cursor select (for hours and minutes)
+
       if (upBtn.pressed())
       {
         clock.next();
+        clock.setMovementEnabled(true);
       }
 
       if (downBtn.pressed())
       {
         clock.previous();
+        clock.setMovementEnabled(true);
       }
       break;
 
     case ManualMode:;
       lcd.setCursor(0, 0);
       lcd.print(F("Manual Mode"));
+
+      // Update manual override
+      manualOverride = upBtn.isPressed();
+      clock.setMovementEnabled(true);
+
       break;
 
     default:
@@ -294,59 +312,4 @@ void TaskInterface(void *pvParameters)
 
     xTaskDelayUntil(&prevTime, 40 / portTICK_PERIOD_MS);
   }
-}
-
-void displayInfo()
-{
-  Serial.print(F("Location: "));
-  if (gps.location.isValid())
-  {
-    Serial.print(gps.location.lat(), 6);
-    Serial.print(F(","));
-    Serial.print(gps.location.lng(), 6);
-  }
-  else
-  {
-    Serial.print(F("INVALID"));
-  }
-
-  Serial.print(F("  Date/Time: "));
-  if (gps.date.isValid())
-  {
-    Serial.print(gps.date.month());
-    Serial.print(F("/"));
-    Serial.print(gps.date.day());
-    Serial.print(F("/"));
-    Serial.print(gps.date.year());
-  }
-  else
-  {
-    Serial.print(F("INVALID"));
-  }
-
-  Serial.print(F(" "));
-  if (gps.time.isValid())
-  {
-    if (gps.time.hour() < 10)
-      Serial.print(F("0"));
-    Serial.print(gps.time.hour());
-    Serial.print(F(":"));
-    if (gps.time.minute() < 10)
-      Serial.print(F("0"));
-    Serial.print(gps.time.minute());
-    Serial.print(F(":"));
-    if (gps.time.second() < 10)
-      Serial.print(F("0"));
-    Serial.print(gps.time.second());
-    Serial.print(F("."));
-    if (gps.time.centisecond() < 10)
-      Serial.print(F("0"));
-    Serial.print(gps.time.centisecond());
-  }
-  else
-  {
-    Serial.print(F("INVALID"));
-  }
-
-  Serial.println();
 }
