@@ -60,7 +60,7 @@ bool Clock::setLeftHanded(bool set)
 
 void Clock::autoMove(bool enable)
 {
-    digitalWrite(dirPin, !(curMinute % 2 == 0)); // Set the dir if even/odd
+    digitalWrite(dirPin, isLeftHanded ? !(curMinute % 2 == 0) : curMinute % 2 == 0); // Set the dir if even/odd
     digitalWrite(enPin, enable && movementEnabled);
 }
 
