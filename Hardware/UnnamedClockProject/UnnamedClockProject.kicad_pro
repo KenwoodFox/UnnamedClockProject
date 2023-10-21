@@ -444,7 +444,7 @@
       "idf": "",
       "netlist": "",
       "specctra_dsn": "",
-      "step": "",
+      "step": "UnnamedClockProject.step",
       "vrml": ""
     },
     "page_layout_descr_file": "Libraries/ac1ja-kicad-libraries/worksheets/BlankWorksheet.kicad_wks"
