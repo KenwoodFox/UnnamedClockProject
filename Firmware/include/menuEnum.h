@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 
-const uint8_t numMenuItems = 3;
+const uint8_t numMenuItems = 4;
 
 enum Menu
 {
@@ -14,6 +14,23 @@ enum Menu
     ManualMode,
     LeftHandedNess,
 };
+
+const uint8_t numPosItems = 3;
+
+enum SetPos
+{
+    None,
+    Hour,
+    Minute,
+};
+
+inline SetPos operator++(SetPos &eDOW, int)
+{
+    const SetPos ePrev = eDOW;
+    const int i = static_cast<int>(eDOW);
+    eDOW = static_cast<SetPos>((i + 1) % numPosItems);
+    return ePrev;
+}
 
 inline Menu operator++(Menu &eDOW, int)
 {

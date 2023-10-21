@@ -23,6 +23,6 @@
 #define DOWN_PIN A1
 #define LEFT_PIN A2
 #define RIGH_PIN A3
-#define MENU_PIN A4
+#define MENU_PIN 0
 
 #endif
