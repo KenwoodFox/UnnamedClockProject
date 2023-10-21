@@ -259,7 +259,7 @@ void TaskInterface(void *pvParameters)
       lcd.print(F("Manual Mode"));
 
       // Update manual override
-      manualOverride = upBtn.isPressed();
+      manualOverride = !upBtn.isPressed();
       clock.setMovementEnabled(true);
 
       break;
@@ -299,7 +299,7 @@ void TaskInterface(void *pvParameters)
 
     // Overlays!
     lcd.setCursor(15, 0);
-    if (clock.needAdvance())
+    if (clock.needAdvance() || manualOverride)
     {
       lcd.write((byte)((gps.time.second() % 4) + 2));
     }
