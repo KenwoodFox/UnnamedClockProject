@@ -1,5 +1,5 @@
 /**
- * @file Clock.h
+ * @file ClockDriver.h
  * @author Joe
  * @brief Synchronized Clock Driver Code
  */
@@ -12,7 +12,7 @@
  *
  * @author Joe (joe.sedutto@silvertech.com)
  */
-class Clock
+class ClockDriver
 {
 private:
     // Current Positions
@@ -33,7 +33,7 @@ public:
     // Locks
     bool movementEnabled = false;
 
-    Clock(uint8_t _enPin, uint8_t _dirPin);
+    ClockDriver(uint8_t _enPin, uint8_t _dirPin);
 
     /**
      * @brief Important setup functions for clock.
