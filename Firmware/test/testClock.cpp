@@ -1,12 +1,12 @@
 #include <unity.h>
 #include <LiquidCrystal.h>
 
-#include "Clock.h"
+#include "ClockDriver.h"
 #include "boardPins.h"
 #include "timeTools.h"
 
 // Objects
-Clock clock(EN_PIN, DIR_PIN);
+ClockDriver clock(EN_PIN, DIR_PIN);
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 void setUp(void)
