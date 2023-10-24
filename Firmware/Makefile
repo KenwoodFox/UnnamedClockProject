@@ -47,7 +47,7 @@ monitor:	## Monitors the device serial
 
 # Remote versions of the above
 flash-remote:
-	pio remote --agent silvertech-iot run --target upload
+	pio remote --agent silvertech-desk run --target upload
 
 monitor-remote:
 	pio remote --agent silvertech-iot device monitor
