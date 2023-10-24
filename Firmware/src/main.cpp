@@ -12,7 +12,7 @@
 // #include <Timezone.h>
 // #include <RTClib.h>
 
-#include "Clock.h"
+#include "ClockDriver.h"
 #include "boardPins.h"
 #include "menuEnum.h"
 #include "customChars.h"
@@ -27,7 +27,7 @@ static const int pauseTime = 2 * 1000; // Time between moves
 SoftwareSerial ss(RX_PIN, TX_PIN);
 TinyGPSPlus gps;
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
-Clock clock(EN_PIN, DIR_PIN);
+ClockDriver clockDriver(EN_PIN, DIR_PIN);
 // RTC_DS3231 rtc;
 
 // Buttons
@@ -50,7 +50,7 @@ bool manualOverride = false; // Used when manually overriding
 // Timezone myTZ(myDST, mySTD);
 
 // Defs
-void displayInfo();
+// void displayInfo();
 void TaskDriver(void *pvParameters);
 void TaskInterface(void *pvParameters);
 
@@ -103,7 +103,7 @@ void TaskDriver(void *pvParameters)
 
   // Setup for this task
   pinMode(LED_BUILTIN, OUTPUT);
-  clock.begin();
+  clockDriver.begin();
   // rtc.begin();
 
   // Prev time
@@ -118,21 +118,21 @@ void TaskDriver(void *pvParameters)
     // Move clock
     if (gps.time.isValid())
     { // Ready condition here
-      if (clock.needAdvance() || manualOverride)
+      if (clockDriver.needAdvance() || manualOverride)
       {
-        Log.verboseln(F("Moving clock, %d to %d."), clock.getMinute(), gps.time.minute()); // The minute will never change
-        clock.autoMove(true);                                                              // Begin move
-        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS);                         // Time spent moving
-        clock.next();                                                                      // Auto advance to the next
-        xTaskDelayUntil(&prevTime, pauseTime / portTICK_PERIOD_MS);                        // Time between moves
+        Log.verboseln(F("Moving clock, %d to %d."), clockDriver.getMinute(), gps.time.minute()); // The minute will never change
+        clockDriver.autoMove(true);                                                              // Begin move
+        xTaskDelayUntil(&prevTime, mvmtTime / portTICK_PERIOD_MS);                               // Time spent moving
+        clockDriver.next();                                                                      // Auto advance to the next
+        xTaskDelayUntil(&prevTime, pauseTime / portTICK_PERIOD_MS);                              // Time between moves
       }
       else
       {
-        clock.move(false, false); // Stop moving
+        clockDriver.move(false, false); // Stop moving
       }
     }
 
-    clock.setTarget(gps.time.minute(), getLocalHour(gps.time.hour())); // Set the target
+    clockDriver.setTarget(gps.time.minute(), getLocalHour(gps.time.hour())); // Set the target
 
     // Blinky
     digitalWrite(LED_BUILTIN, gps.time.second() % 2 == 0); // TODO: Move me, misc function
@@ -230,7 +230,7 @@ void TaskInterface(void *pvParameters)
       lcd.setCursor(0, 0);
       lcd.print(F("Set Time    "));
       lcd.setCursor(0, 1);
-      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", getLocalHour(gps.time.hour()), gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
+      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", getLocalHour(gps.time.hour()), gps.time.minute(), clockDriver.getHour(), clockDriver.getMinute(), gps.time.second());
       lcd.print(_lineBuf);
 
       lcd.cursor();
@@ -243,14 +243,14 @@ void TaskInterface(void *pvParameters)
 
       if (upBtn.pressed())
       {
-        clock.next();
-        clock.setMovementEnabled(true);
+        clockDriver.next();
+        clockDriver.setMovementEnabled(true);
       }
 
       if (downBtn.pressed())
       {
-        clock.previous();
-        clock.setMovementEnabled(true);
+        clockDriver.previous();
+        clockDriver.setMovementEnabled(true);
       }
       break;
 
@@ -260,7 +260,7 @@ void TaskInterface(void *pvParameters)
 
       // Update manual override
       manualOverride = upBtn.isPressed();
-      clock.setMovementEnabled(true);
+      clockDriver.setMovementEnabled(true);
 
       break;
 
@@ -285,7 +285,7 @@ void TaskInterface(void *pvParameters)
 
     // Overlays!
     lcd.setCursor(15, 0);
-    if (clock.needAdvance())
+    if (clockDriver.needAdvance())
     {
       lcd.write((byte)((gps.time.second() % 4) + 2));
     }

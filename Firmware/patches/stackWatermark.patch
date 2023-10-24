@@ -1,0 +1,4 @@
+195c195
+< #define INCLUDE_uxTaskGetStackHighWaterMark (0)
+---
+> #define INCLUDE_uxTaskGetStackHighWaterMark (1)
