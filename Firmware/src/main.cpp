@@ -192,6 +192,10 @@ void TaskInterface(void *pvParameters)
   // Menu index/temp values
   Menu menuIdx = ClockSet;
   char _lineBuf[17]; // Screen is 16 long but null term is extra undrawn byte
+  SetPos pos = None;
+  int _HrToSet = 0;   // The hour we will set
+  int _MinToSet = 0;  // The minute we will set
+  uint8_t _hrpos = 0; // The x location of the hour number (always 6 when we start running this menu)
 
   for (uint8_t i = 0; i < 5; i++)
   {
@@ -226,31 +230,86 @@ void TaskInterface(void *pvParameters)
       break;
 
     case ClockSet:;
-      // Clock Setting Menu
-      lcd.setCursor(0, 0);
-      lcd.print(F("Set Time    "));
-      lcd.setCursor(0, 1);
-      sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", getLocalHour(gps.time.hour()), gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
-      lcd.print(_lineBuf);
+      // Check if we're setting something
 
-      lcd.cursor();
-      lcd.setCursor(0, 1);
-      lcd.noBlink();
-      lcd.setCursor(1, 1);
-      lcd.noBlink();
+      _hrpos = 6;
 
-      // TODO: Implement cursor select (for hours and minutes)
-
-      if (upBtn.pressed())
+      switch (pos)
       {
-        clock.next();
-        clock.setMovementEnabled(true);
+      case Minute:;
+        _hrpos += 3; // Scoot to the right to cover the minute
+
+        if (upBtn.pressed())
+        {
+          _MinToSet++;
+          _MinToSet = _MinToSet % 60;
+        }
+
+        if (downBtn.pressed())
+        {
+          _MinToSet--;
+          _MinToSet < 0 ? _MinToSet = 59 : _MinToSet = _MinToSet;
+        }
+
+      case Hour:;
+        // Dont move if we're setting time!
+        clock.setMovementEnabled(false);
+
+        // One last check to make sure this loop is simple (dont overrun this segment)
+        if (pos != Minute)
+        {
+          if (upBtn.pressed())
+          {
+            _HrToSet++;
+            _HrToSet = _HrToSet % 12;
+          }
+
+          if (downBtn.pressed())
+          {
+            _HrToSet--;
+            _HrToSet < 0 ? _HrToSet = 12 : _HrToSet = _HrToSet;
+          }
+        }
+
+        lcd.setCursor(_hrpos, 1);
+        if (millis() % 1000 < 500)
+        {
+          // Blank over
+          lcd.print("  ");
+        }
+        else
+        {
+          // Print the blinking 2 digit number
+          sprintf(_lineBuf, "%02d", pos == Minute ? _MinToSet : _HrToSet);
+          lcd.print(_lineBuf);
+        }
+        break;
+
+      case None:;
+        // Check if inputs were set
+        if (_HrToSet + _MinToSet > 0)
+        {
+          // Push them to the clock
+          clock.setTime(_MinToSet, _HrToSet);
+          _MinToSet = 0;
+          _HrToSet = 0;
+          clock.setMovementEnabled(true);
+        }
+
+      default:
+        lcd.setCursor(0, 0);
+        lcd.print(F("Set Time    "));
+        lcd.setCursor(0, 1);
+        sprintf(_lineBuf, "%02d:%02d %02d:%02d (%02d)", getLocalHour(gps.time.hour()), gps.time.minute(), clock.getHour(), clock.getMinute(), gps.time.second());
+        lcd.print(_lineBuf);
+        break;
       }
 
-      if (downBtn.pressed())
+      // Accept button inputs
+      if (menuBtn.pressed())
       {
-        clock.previous();
-        clock.setMovementEnabled(true);
+        pos++;
+        Log.infoln(F("Pos is now %d"), pos);
       }
       break;
 
@@ -259,8 +318,22 @@ void TaskInterface(void *pvParameters)
       lcd.print(F("Manual Mode"));
 
       // Update manual override
-      manualOverride = upBtn.isPressed();
+      manualOverride = !upBtn.isPressed();
       clock.setMovementEnabled(true);
+
+      break;
+
+    case LeftHandedNess:;
+      lcd.setCursor(0, 0);
+      lcd.print(F("Left hand L1L2?"));
+      lcd.setCursor(0, 1);
+      sprintf(_lineBuf, "isLeftHanded %d", clock.setLeftHanded());
+      lcd.print(_lineBuf);
+
+      if (upBtn.pressed() || downBtn.pressed())
+      {
+        clock.setLeftHanded(true);
+      }
 
       break;
 
@@ -285,7 +358,7 @@ void TaskInterface(void *pvParameters)
 
     // Overlays!
     lcd.setCursor(15, 0);
-    if (clock.needAdvance())
+    if (clock.needAdvance() || manualOverride)
     {
       lcd.write((byte)((gps.time.second() % 4) + 2));
     }
