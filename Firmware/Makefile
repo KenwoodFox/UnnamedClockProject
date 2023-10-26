@@ -50,9 +50,9 @@ flash-remote:
 	pio remote --agent silvertech-desk run --target upload
 
 monitor-remote:
-	pio remote --agent silvertech-iot device monitor
+	pio remote --agent silvertech-desk device monitor
 
 tests-remote:	## Run automated tests (remote)
-	pio remote --agent silvertech-iot test
+	pio remote --agent silvertech-desk test
 
 debug-remote: flash-remote monitor-remote
